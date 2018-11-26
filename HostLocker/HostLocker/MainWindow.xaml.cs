@@ -12,6 +12,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Documents;
+using System.Windows.Forms;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
@@ -103,6 +104,13 @@ namespace HostLocker {
                 Console.WriteLine("Stop");
             }
             catch (Exception) { }
+        }
+
+        private void Button_Click_2(object sender, RoutedEventArgs e)
+        {
+            QRCodeWindow qrcode = new QRCodeWindow(e);
+            qrcode.Show();
+            Console.WriteLine("asdasdasdasd");
         }
     }
 }

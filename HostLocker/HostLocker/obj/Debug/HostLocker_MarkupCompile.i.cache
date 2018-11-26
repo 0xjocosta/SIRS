@@ -4,17 +4,17 @@
 winexe
 C#
 .cs
-C:\Users\extre\source\repos\HostLocker\HostLocker\obj\Debug\
+C:\Github\SIRS\HostLocker\HostLocker\obj\Debug\
 HostLocker
 none
 false
 DEBUG;TRACE
-C:\Users\extre\source\repos\HostLocker\HostLocker\App.xaml
-11151548125
+C:\Github\SIRS\HostLocker\HostLocker\App.xaml
+21657522069
 
-13373464268
-151971883548
-MainWindow.xaml;
+14593444718
+20-1958882510
+MainWindow.xaml;QRCode.xaml;
 
-False
+True
 

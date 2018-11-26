@@ -162,7 +162,7 @@ namespace HostLocker {
             }
             throw new Exception();
         }
-
+        /*
         public void Connnect(BluetoothAddress deviceAdress) {
             Console.WriteLine("Device found, Address:" + deviceAdress.ToString());
 
@@ -194,6 +194,6 @@ namespace HostLocker {
                     Thread.Sleep(500);
                 } while (true);
             }
-        }
+        }*/
     }
 }

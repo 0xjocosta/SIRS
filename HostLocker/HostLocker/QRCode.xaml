@@ -1,0 +1,12 @@
+﻿<Window x:Name="QRCode" x:Class="HostLocker.QRCodeWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:HostLocker"
+        mc:Ignorable="d"
+        Title="QRCode" Height="450" Width="500">
+    <Grid Margin="0,0,0,0">
+        <Image HorizontalAlignment="Left" Height="350" VerticalAlignment="Top" Width="334" Margin="82,24,0,0"/>
+    </Grid>
+</Window>

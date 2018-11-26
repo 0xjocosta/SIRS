@@ -50,7 +50,15 @@ namespace HostLocker {
                 stream.Flush();
 
                 for (int i = 0; i < bytes.Length; i++) {
-                    retrievedMsg += Convert.ToChar(bytes[i]);
+                    
+                    byte c = Convert.ToByte('|');
+                    //retrievedMsg += Convert.ToChar(bytes[i]);
+                    if(bytes[i] != c)
+                    {
+                        retrievedMsg += Convert.ToChar(bytes[i]);
+                        continue;
+                    }
+                    break;
                 }
 
                 return retrievedMsg;
