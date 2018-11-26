@@ -96,6 +96,7 @@ namespace HostLocker {
             Console.WriteLine("Started");
             BluetoothClientWrapper bc = await bm.ReceiveConnection();
             Console.WriteLine(bc.ReadFromBtDevice());
+            bc.sendMessage("It wokrs||!!");
         }
 
         private void Button_Click_1(object sender, RoutedEventArgs e) {
