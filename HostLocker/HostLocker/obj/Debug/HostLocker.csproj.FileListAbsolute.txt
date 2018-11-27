@@ -45,7 +45,6 @@ F:\SIRS\HostLocker\HostLocker\bin\Debug\InTheHand.Net.Personal.dll
 F:\SIRS\HostLocker\HostLocker\bin\Debug\QRCoder.dll
 F:\SIRS\HostLocker\HostLocker\bin\Debug\System.Drawing.Common.dll
 F:\SIRS\HostLocker\HostLocker\bin\Debug\InTheHand.Net.Personal.xml
-F:\SIRS\HostLocker\HostLocker\obj\Debug\HostLocker.csprojAssemblyReference.cache
 F:\SIRS\HostLocker\HostLocker\obj\Debug\MainWindow.g.cs
 F:\SIRS\HostLocker\HostLocker\obj\Debug\QRCode.g.cs
 F:\SIRS\HostLocker\HostLocker\obj\Debug\App.g.cs
@@ -60,3 +59,7 @@ F:\SIRS\HostLocker\HostLocker\obj\Debug\HostLocker.csproj.CoreCompileInputs.cach
 F:\SIRS\HostLocker\HostLocker\obj\Debug\HostLocker.csproj.CopyComplete
 F:\SIRS\HostLocker\HostLocker\obj\Debug\HostLocker.exe
 F:\SIRS\HostLocker\HostLocker\obj\Debug\HostLocker.pdb
+F:\SIRS\HostLocker\HostLocker\obj\Debug\HostLocker.csprojAssemblyReference.cache
+F:\SIRS\HostLocker\HostLocker\bin\Debug\Newtonsoft.Json.dll
+F:\SIRS\HostLocker\HostLocker\bin\Debug\Newtonsoft.Json.pdb
+F:\SIRS\HostLocker\HostLocker\bin\Debug\Newtonsoft.Json.xml

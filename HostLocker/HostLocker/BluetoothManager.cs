@@ -3,6 +3,7 @@ using InTheHand.Net.Bluetooth;
 using InTheHand.Net.Sockets;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
@@ -14,9 +15,10 @@ namespace HostLocker {
     class BluetoothManager {
         private bool _beginConnect;
         private BluetoothClient _bluetoothClient;
+        private BluetoothClientWrapper _bluetoothRemoteClient = null;
         public BluetoothListener bl { get; set; }
-        private bool IsListening = false;
-        EndPoint LocalListenEndPoint;
+        private bool serverStarted = false;
+        public string nonce;
 
         BluetoothAddress LOCAL_MAC;
 
@@ -53,6 +55,10 @@ namespace HostLocker {
             return null;
         }
 
+        public BluetoothClientWrapper RemoteClient() {
+            return _bluetoothRemoteClient;
+        }
+
         public static BluetoothAddress GetBTMacAddress() {
 
             BluetoothRadio myRadio = BluetoothRadio.PrimaryRadio;
@@ -65,6 +71,7 @@ namespace HostLocker {
 
         public void Scan(object sender, DiscoverDevicesEventArgs e) {
             // log and save all found devices
+            
             for (int i = 0; i < e.Devices.Length; i++) {
                 if (e.Devices[i].Remembered) {
                     Console.WriteLine(e.Devices[i].DeviceName + " (" + e.Devices[i].DeviceAddress + "): Device is known");
@@ -82,40 +89,65 @@ namespace HostLocker {
 
         public bool Pair(BluetoothAddress address, string DEVICE_PIN) {
             return BluetoothSecurity.PairRequest(address, DEVICE_PIN);
-            // get a list of all paired devices
-            //BluetoothDeviceInfo[] paired = localClient.DiscoverDevices(255, false, true, false, false);
-            // check every discovered device if it is already paired 
-            /*
-            foreach (BluetoothDeviceInfo device in this.deviceList) {
-                bool isPaired = false;
-                for (int i = 0; i < paired.Length; i++) {
-                    if (device.Equals(paired[i])) {
-                        isPaired = true;
-                        break;
+        }
+
+        internal virtual void Dispose(bool disposing) {
+            if (disposing) {
+                try {
+                    if (bl != null) {
+                        bl.Stop();
+                        bl = null;
                     }
                 }
-
-                // if the device is not paired, pair it!
-                if (!isPaired) {
-                    // replace DEVICE_PIN here, synchronous method, but fast
-                    isPaired = BluetoothSecurity.PairRequest(device.DeviceAddress, DEVICE_PIN);
+                catch (Exception) { }
+            }
+        }
+        public async Task ReceiveConnection() {
+            try {
+                if (!serverStarted) {
+                    bl = new BluetoothListener(LOCAL_MAC, BluetoothService.SerialPort);
+                    bl.Start(10);
+                    serverStarted = true;
+                    Task<BluetoothClientWrapper> task = Task<BluetoothClientWrapper>.Factory.FromAsync(bl.BeginAcceptBluetoothClient, AcceptConnection, bl);
+                    BluetoothClientWrapper result = await task;
+                    if (task.IsCompleted) {
+                        _bluetoothRemoteClient = result;
+                    }
                 }
             }
-            */
+            catch (Exception ex) {
+                serverStarted = false;
+                Console.WriteLine(ex);
+            }
         }
 
-        public Task<BluetoothClientWrapper> ReceiveConnection() {
-            bl = new BluetoothListener(LOCAL_MAC, BluetoothService.SerialPort);
-            bl.Start(10);
-            //l.BeginAcceptBluetoothClient(new AsyncCallback(AcceptConnection), l);
-
-            return Task<BluetoothClientWrapper>.Factory.FromAsync(bl.BeginAcceptBluetoothClient, AcceptConnection, bl);
+        public void VerifyClient(string response) {
+            BluetoothDeviceInfo device;
+            foreach (BluetoothDeviceInfo dev in deviceList) {
+                Console.WriteLine(dev.DeviceName, _bluetoothRemoteClient.GetClient().RemoteMachineName);
+                if(dev.DeviceName == _bluetoothRemoteClient.GetClient().RemoteMachineName) {
+                    Console.WriteLine("Auth");
+                    device = dev;
+                    _bluetoothRemoteClient.SetDeviceInfo(device);
+                    if (device.Authenticated && device.Remembered && device.Connected) {
+                        Console.WriteLine(response);
+                        if (nonce != response) {
+                            throw new Exception("Not the Entity Authenticated!");
+                        }
+                    }
+                    break;
+                }
+            }
+            throw new Exception("Not Authenticated!");
         }
-
         BluetoothClientWrapper AcceptConnection(IAsyncResult result) {
             if (result.IsCompleted) {
-                BluetoothClient bc = ((BluetoothListener)result.AsyncState).EndAcceptBluetoothClient(result);
-                return new BluetoothClientWrapper(bc);
+                try {
+                    BluetoothClient bc = ((BluetoothListener)result.AsyncState).EndAcceptBluetoothClient(result);
+                    return new BluetoothClientWrapper(bc);
+                } catch (Exception ex) {
+                    return null;
+                }
             }
             throw new Exception("Callback not completed!");
         }
@@ -162,38 +194,5 @@ namespace HostLocker {
             }
             throw new Exception();
         }
-        /*
-        public void Connnect(BluetoothAddress deviceAdress) {
-            Console.WriteLine("Device found, Address:" + deviceAdress.ToString());
-
-            BluetoothDeviceInfo _bluetoothDevice = new BluetoothDeviceInfo(deviceAdress);
-
-            if (BluetoothSecurity.PairRequest(_bluetoothDevice.DeviceAddress, "1111")) {
-                Console.WriteLine("Pair request result: :D");
-
-                if (_bluetoothDevice.Authenticated) {
-                    Console.WriteLine("Authenticated result: Cool :D");
-
-                    _bluetoothClient.BeginConnect(_bluetoothDevice.DeviceAddress, BluetoothService.SerialPort, null, _bluetoothDevice);
-                    _beginConnect = true;
-                }
-                else {
-                    Console.WriteLine("Authenticated: So sad :(");
-                }
-            }
-            else {
-                Console.WriteLine("PairRequest: Sad :(");
-            }
-
-            if (_beginConnect) {
-                do {
-                    if(_bluetoothClient.Connected) {
-                        //sendMessage("TEST STRING");
-                        //Console.WriteLine(ReadFromBtDevice());
-                    }
-                    Thread.Sleep(500);
-                } while (true);
-            }
-        }*/
     }
 }
