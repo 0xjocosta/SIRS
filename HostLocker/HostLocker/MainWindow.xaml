@@ -17,18 +17,18 @@
             <ColumnDefinition Width="319*"/>
             <ColumnDefinition Width="148*"/>
         </Grid.ColumnDefinitions>
-        <Button Margin="89,251.2,36.833,0" Name="btn_find" Height="23" VerticalAlignment="Top" Click="btn_find_Click" Grid.Row="1">Find Bluetooth Devices</Button>
+        <Button Margin="89,251.2,36.833,0" Name="btn_find" Height="23" VerticalAlignment="Top" Click="btn_find_Click" Grid.Row="1" Visibility="Hidden">Find Bluetooth Devices</Button>
         <ProgressBar Height="26" Margin="61,206.2,18.833,0" Name="pb" VerticalAlignment="Top" IsIndeterminate="True" Visibility="Hidden" Grid.Row="1" />
         <ListBox SelectionChanged="device_list_SelectionChanged" Margin="61,18.2,0,0" Name="device_list" HorizontalAlignment="Left" Width="224" Height="156" VerticalAlignment="Top" Grid.Row="1" />
-        <Label Height="28" Margin="110.8,20,104.4,0" Name="label1" VerticalAlignment="Top" Grid.Column="2" Grid.RowSpan="2">Device Name:</Label>
-        <Label Height="28" HorizontalAlignment="Right" Margin="0,11.2,125.4,0" Name="label2" VerticalAlignment="Top" Width="73" Grid.Column="2" Grid.Row="1">Connected:</Label>
-        <Label Height="28" Margin="110.8,44.2,105.4,0" Name="label3" VerticalAlignment="Top" Grid.Column="2" Grid.Row="1">Authenticated:</Label>
-        <Label HorizontalAlignment="Right" Margin="0,77.2,110.4,0" Name="label4" Width="88" Height="25" VerticalAlignment="Top" Grid.Column="2" Grid.Row="1">Remembered:</Label>
-        <Label HorizontalAlignment="Right" Margin="0,111.2,134.4,0" Name="label8" Width="64" Height="25" VerticalAlignment="Top" Grid.Column="2" Grid.Row="1">LastUsed:</Label>
-        <TextBox Height="23" HorizontalAlignment="Right" Margin="0,25,97.4,0" Name="txt_devicename" VerticalAlignment="Top" Width="150" IsReadOnly="True" Grid.Column="2" Grid.ColumnSpan="2" Grid.RowSpan="2" />
-        <TextBox Height="23" HorizontalAlignment="Right" Margin="0,8.2,97.4,0" Name="txt_connected" VerticalAlignment="Top" Width="150" IsReadOnly="True" Grid.Column="2" Grid.Row="1" Grid.ColumnSpan="2" />
-        <TextBox HorizontalAlignment="Right" Margin="0,77.2,97.4,0" Name="txt_remembered" Width="150" Height="25" VerticalAlignment="Top" IsReadOnly="True" Grid.Column="2" Grid.Row="1" Grid.ColumnSpan="2" />
-        <TextBox HorizontalAlignment="Right" Margin="0,45.2,96.4,0" Name="txt_authenticated" Width="150" Height="21" VerticalAlignment="Top" IsReadOnly="True" Grid.Column="2" Grid.Row="1" RenderTransformOrigin="0.5,0.5" Grid.ColumnSpan="2" >
+        <Label Height="28" Margin="104.6,86.2,110.6,0" Name="label1" VerticalAlignment="Top" Grid.Column="2" Grid.Row="1">Device Name:</Label>
+        <Label Height="28" HorizontalAlignment="Right" Margin="0,126.2,131.6,0" Name="label2" VerticalAlignment="Top" Width="73" Grid.Column="2" Grid.Row="1">Connected:</Label>
+        <Label Height="28" Margin="104.6,159.2,111.6,0" Name="label3" VerticalAlignment="Top" Grid.Column="2" Grid.Row="1">Authenticated:</Label>
+        <Label HorizontalAlignment="Right" Margin="0,192.2,116.6,0" Name="label4" Width="88" Height="25" VerticalAlignment="Top" Grid.Column="2" Grid.Row="1">Remembered:</Label>
+        <Label HorizontalAlignment="Right" Margin="0,226.2,140.6,0" Name="label8" Width="64" Height="25" VerticalAlignment="Top" Grid.Column="2" Grid.Row="1">LastUsed:</Label>
+        <TextBox Height="23" HorizontalAlignment="Right" Margin="0,91.2,104,0" Name="txt_devicename" VerticalAlignment="Top" Width="150" IsReadOnly="True" Grid.Column="2" Grid.ColumnSpan="2" Grid.Row="1" />
+        <TextBox Height="23" HorizontalAlignment="Right" Margin="0,123.2,104,0" Name="txt_connected" VerticalAlignment="Top" Width="150" IsReadOnly="True" Grid.Column="2" Grid.Row="1" Grid.ColumnSpan="2" />
+        <TextBox HorizontalAlignment="Right" Margin="0,192.2,104,0" Name="txt_remembered" Width="150" Height="25" VerticalAlignment="Top" IsReadOnly="True" Grid.Column="2" Grid.Row="1" Grid.ColumnSpan="2" />
+        <TextBox HorizontalAlignment="Right" Margin="0,160.2,103,0" Name="txt_authenticated" Width="150" Height="21" VerticalAlignment="Top" IsReadOnly="True" Grid.Column="2" Grid.Row="1" RenderTransformOrigin="0.5,0.5" Grid.ColumnSpan="2" >
             <TextBox.RenderTransform>
                 <TransformGroup>
                     <ScaleTransform/>
@@ -38,11 +38,11 @@
                 </TransformGroup>
             </TextBox.RenderTransform>
         </TextBox>
-        <TextBox HorizontalAlignment="Right" Margin="0,113.2,97.4,0" Name="txt_lastused" Width="150" Height="23" VerticalAlignment="Top" IsReadOnly="True" Grid.Column="2" Grid.Row="1" Grid.ColumnSpan="2" />
+        <TextBox HorizontalAlignment="Right" Margin="0,228.2,104,0" Name="txt_lastused" Width="150" Height="23" VerticalAlignment="Top" IsReadOnly="True" Grid.Column="2" Grid.Row="1" Grid.ColumnSpan="2" />
         <Button Content="Connect" Name="connect_to_device" HorizontalAlignment="Left" Margin="135,336.2,0,0" VerticalAlignment="Top" Width="75" Visibility="Hidden" Click="connect_to_device_Click" Grid.Row="1" Height="19"/>
         <Button Content="Listen" Name="listen_btn" HorizontalAlignment="Left" Margin="61,21,0,0.8" Width="85" RenderTransformOrigin="-0.701,0.658" Click="Button_Click" Visibility="Visible"/>
         <Button Content="Stop" Name="stop_listen_btn" HorizontalAlignment="Left" Height="27" Margin="208,21,0,0" VerticalAlignment="Top" Width="77" Click="Button_Click_1" Visibility="Hidden" RenderTransformOrigin="1.58,0.44" Grid.RowSpan="2"/>
-        <Image Name="QrCodeImage" HorizontalAlignment="Left" Height="263" VerticalAlignment="Top" Width="280" Margin="110.6,141.2,0,0" Grid.Column="2" Grid.Row="1" Grid.ColumnSpan="2" Visibility="Visible"/>
-        <TextBox Name="success_txt" Grid.Column="2" HorizontalAlignment="Left" Height="23" Margin="219.8,251.2,0,0" Grid.Row="1" TextWrapping="Wrap" Text="Registred and Connected" VerticalAlignment="Top" Width="145" Grid.ColumnSpan="2" Visibility="Hidden"/>
+        <Image Name="QrCodeImage" HorizontalAlignment="Left" Height="314" VerticalAlignment="Top" Width="366" Margin="48.6,10.2,0,0" Grid.ColumnSpan="2" Visibility="Visible" Grid.Row="1" Grid.Column="2"/>
+        <TextBlock Name="success_txt" Grid.Column="2" HorizontalAlignment="Left" Height="23" Margin="219.8,251.2,0,0" Grid.Row="1" TextWrapping="Wrap" Text="Registred and Connected" VerticalAlignment="Top" Width="145" Grid.ColumnSpan="2" Visibility="Hidden"/>
     </Grid>
 </Window>

@@ -1,6 +1,7 @@
 ﻿using InTheHand.Net;
 using InTheHand.Net.Bluetooth;
 using InTheHand.Net.Sockets;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -10,6 +11,7 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows;
 
 namespace HostLocker {
     class BluetoothManager {
@@ -29,18 +31,24 @@ namespace HostLocker {
         // component is used to manage device discovery
         BluetoothComponent localComponent;
         // List of Devices Found
-        List<BluetoothDeviceInfo> deviceList = new List<BluetoothDeviceInfo>();
+        public List<BluetoothDeviceInfo> deviceList = new List<BluetoothDeviceInfo>();
+        MainWindow _window;
+        List<Device> devicesWrapper = new List<Device>();
 
-        public BluetoothManager() {
+        public BluetoothManager(MainWindow window) {
+            _window = window;
             LOCAL_MAC = GetBTMacAddress();
             if (LOCAL_MAC != null) {
                 localEndpoint = new BluetoothEndPoint(LOCAL_MAC, BluetoothService.SerialPort);
                 localClient = new BluetoothClient(localEndpoint);
                 localComponent = new BluetoothComponent(localClient);
                 // async methods, can be done synchronously too
-                localComponent.DiscoverDevicesAsync(255, true, true, true, true, null);
+                localComponent.DiscoverDevicesAsync(255, true, true, true, false, null);
                 localComponent.DiscoverDevicesProgress += new EventHandler<DiscoverDevicesEventArgs>(Scan);
                 localComponent.DiscoverDevicesComplete += new EventHandler<DiscoverDevicesEventArgs>(Scan_Complete);
+                window.pb.Visibility = Visibility.Visible;
+                _window.listen_btn.Visibility = Visibility.Hidden;
+                _window.btn_find.Visibility = Visibility.Hidden;
             }
             else {
                 throw new Exception("No radio hardware or unsupported software stack");
@@ -71,20 +79,26 @@ namespace HostLocker {
 
         public void Scan(object sender, DiscoverDevicesEventArgs e) {
             // log and save all found devices
-            
+
             for (int i = 0; i < e.Devices.Length; i++) {
+                this.deviceList.Add(e.Devices[i]);
+
                 if (e.Devices[i].Remembered) {
                     Console.WriteLine(e.Devices[i].DeviceName + " (" + e.Devices[i].DeviceAddress + "): Device is known");
                 }
                 else {
+                    devicesWrapper.Add(new Device(e.Devices[i]));
                     Console.WriteLine(e.Devices[i].DeviceName + " (" + e.Devices[i].DeviceAddress + "): Device is unknown");
                 }
-                this.deviceList.Add(e.Devices[i]);
             }
         }
 
         private void Scan_Complete(object sender, DiscoverDevicesEventArgs e) {
             Console.WriteLine("Devices discovered: " + e.Devices);
+            _window.pb.Visibility = Visibility.Hidden;
+            _window.device_list.ItemsSource = devicesWrapper;
+            _window.listen_btn.Visibility = Visibility.Visible;
+            _window.btn_find.Visibility = Visibility.Visible;
         }
 
         public bool Pair(BluetoothAddress address, string DEVICE_PIN) {
@@ -97,6 +111,10 @@ namespace HostLocker {
                     if (bl != null) {
                         bl.Stop();
                         bl = null;
+                        _window.stop_listen_btn.Visibility = Visibility.Hidden;
+                        _window.listen_btn.Visibility = Visibility.Visible;
+                        _window.pb.Visibility = Visibility.Hidden;
+                        serverStarted = false;
                     }
                 }
                 catch (Exception) { }
@@ -121,24 +139,28 @@ namespace HostLocker {
             }
         }
 
+        private Dictionary<string, string> JsonParser(string code) {
+            return (Dictionary<string, string>)JsonConvert.DeserializeObject(code);
+        }
+
         public void VerifyClient(string response) {
             BluetoothDeviceInfo device;
             foreach (BluetoothDeviceInfo dev in deviceList) {
-                Console.WriteLine(dev.DeviceName, _bluetoothRemoteClient.GetClient().RemoteMachineName);
                 if(dev.DeviceName == _bluetoothRemoteClient.GetClient().RemoteMachineName) {
                     Console.WriteLine("Auth");
                     device = dev;
+                    device.Refresh();
                     _bluetoothRemoteClient.SetDeviceInfo(device);
                     if (device.Authenticated && device.Remembered && device.Connected) {
-                        Console.WriteLine(response);
-                        if (nonce != response) {
-                            throw new Exception("Not the Entity Authenticated!");
+                        if (nonce == response) {
+                            return;
                         }
+                        throw new Exception("No valid nonce!");
                     }
-                    break;
+                    throw new Exception("Not Authenticated!");
                 }
             }
-            throw new Exception("Not Authenticated!");
+            throw new Exception("Not Device found for the connection request!");
         }
         BluetoothClientWrapper AcceptConnection(IAsyncResult result) {
             if (result.IsCompleted) {
