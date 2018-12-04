@@ -26,6 +26,7 @@ namespace HostLocker
         }
 
         public string KeyToString(RSAParameters key) {
+            Console.WriteLine($"{Encoding.Unicode.GetString(key.Modulus)}");
             var sw = new StringWriter();
             var xs = new System.Xml.Serialization.XmlSerializer(typeof(RSAParameters));
 

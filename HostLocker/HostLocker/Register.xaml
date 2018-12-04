@@ -42,7 +42,7 @@
         <Button Content="Connect" Name="connect_to_device" HorizontalAlignment="Left" Margin="135,336.2,0,0" VerticalAlignment="Top" Width="75" Visibility="Hidden" Click="connect_to_device_Click" Grid.Row="1" Height="19"/>
         <Button Content="Listen" Name="listen_btn" HorizontalAlignment="Left" Margin="61,21,0,0.8" Width="85" RenderTransformOrigin="-0.701,0.658" Click="Button_Click" Visibility="Visible"/>
         <Button Content="Stop" Name="stop_listen_btn" HorizontalAlignment="Left" Height="27" Margin="208,21,0,0" VerticalAlignment="Top" Width="77" Click="Button_Click_1" Visibility="Hidden" RenderTransformOrigin="1.58,0.44" Grid.RowSpan="2"/>
-        <Image Name="QrCodeImage" HorizontalAlignment="Left" Height="314" VerticalAlignment="Top" Width="366" Margin="48.6,10.2,0,0" Grid.ColumnSpan="2" Visibility="Visible" Grid.Row="1" Grid.Column="2"/>
+        <Image Name="QrCodeImage" HorizontalAlignment="Left" Height="450" VerticalAlignment="Top" Width="450" Margin="0.4,21,0,0" Grid.ColumnSpan="2" Visibility="Visible" Grid.Column="2" Grid.RowSpan="2"/>
         <TextBlock Name="success_txt" Grid.Column="2" HorizontalAlignment="Left" Height="23" Margin="219.8,251.2,0,0" Grid.Row="1" TextWrapping="Wrap" Text="Registred and Connected" VerticalAlignment="Top" Width="145" Grid.ColumnSpan="2" Visibility="Hidden"/>
     </Grid>
 </UserControl>

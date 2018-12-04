@@ -82,7 +82,10 @@ namespace HostLocker {
 
         private async void Button_Click(object sender, RoutedEventArgs e) {
             listen_btn.Visibility = Visibility.Hidden;
-            SetVisibilityOfElements(new object[] {pb, stop_listen_btn, QrCodeImage}, Visibility.Visible);
+            //SetVisibilityOfElements(new object[] {pb, stop_listen_btn, QrCodeImage}, Visibility.Visible);
+            pb.Visibility = Visibility.Visible;
+            stop_listen_btn.Visibility = Visibility.Visible;
+            QrCodeImage.Visibility = Visibility.Visible;
             UserDevice = new UserDevice();
             QrCodeManager qrCodeManager = new QrCodeManager(UserDevice);
             QrCodeImage.Source = qrCodeManager.GenerateQrImage();
@@ -99,7 +102,9 @@ namespace HostLocker {
                 bm.Dispose(true);
             }
             QrCodeImage.Source = null;
-            SetVisibilityOfElements(new object[] { pb, QrCodeImage }, Visibility.Hidden);
+            //SetVisibilityOfElements(new object[] { pb, QrCodeImage }, Visibility.Hidden);
+            pb.Visibility = Visibility.Visible;
+            QrCodeImage.Visibility = Visibility.Visible;
             //Console.WriteLine(bc.ReadFromBtDevice());
             //bc.sendMessage("It wokrs||!!");
         }
@@ -115,7 +120,7 @@ namespace HostLocker {
 
         public void SetVisibilityOfElements(object[] elements, Visibility visibility)
         {
-            foreach (Control element in elements)
+            foreach (UserControl element in elements)
             {
                 element.Visibility = visibility;
             }

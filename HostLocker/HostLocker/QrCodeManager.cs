@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
@@ -47,19 +48,19 @@ namespace HostLocker {
         private string QrCodeContent() {
             return JsonConvert.SerializeObject(
                 new QrCodeObject(
-                    UserDevice.Nonce, 
-                    UserDevice.RSAKeys.GetPublicKeyString(),
-                    UserDevice.DigestKey.GetSecretKeyString())
+                    UserDevice.Nonce,
+                    UserDevice.RSAKeys.PubKey,
+                    UserDevice.DigestKey.SecretKey)
                 );
         }
     }
 
     public class QrCodeObject {
         public string Nonce;
-        public string KcPub;
-        public string Kd;
+        public RSAParameters KcPub;
+        public byte[] Kd;
 
-        public QrCodeObject(string nonce, string kcpub, string kd) {
+        public QrCodeObject(string nonce, RSAParameters kcpub, byte[] kd) {
             Nonce = nonce;
             KcPub = kcpub;
             Kd = kd;
