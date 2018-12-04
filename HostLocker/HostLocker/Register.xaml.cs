@@ -94,7 +94,7 @@ namespace HostLocker {
             {
                 string devicePubKey = bm.BluetoothRemoteClient.ReadFromBtDevice();
                 bm.VerifyClient();
-                UserDevice.SetDeviceKey(UserDevice.DecodeAndDecryptMessage(devicePubKey));
+                UserDevice.SetDeviceKey(devicePubKey);
                 UserDevice.AssociateDevice(bm.BluetoothRemoteClient.BluetoothDeviceInfo);
                 UpdateInfo(new Device(UserDevice.BlDeviceInfo));
                 success_txt.Visibility = Visibility.Visible;

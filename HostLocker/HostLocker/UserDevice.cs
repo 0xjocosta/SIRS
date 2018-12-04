@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.Security.Cryptography;
 using System.Text.RegularExpressions;
 using InTheHand.Net.Sockets;
+using Newtonsoft.Json;
 
 namespace HostLocker
 {
@@ -42,34 +43,36 @@ namespace HostLocker
 
         public string FreshMessage(string msg)
         {
-            return $"{msg}|{GenerateNonce()}";
+            return JsonConvert.SerializeObject(new JsonFreshMessage(msg, GenerateNonce()));
+        }
+
+        public string JsonMessage(string msg) {
+            string cipherText = RSAKeys.Encrypt(msg, DevicePublicKey);
+            return JsonConvert.SerializeObject(new JsonCryptoDigestMessage(cipherText, DigestKey.Encode(cipherText)));
         }
 
         public string EncryptAndEncodeMessage(string msg)
         {
             string freshMessage = FreshMessage(msg);
-            string cipherText = RSAKeys.Encrypt(msg, DevicePublicKey);
-            string digest = DigestKey.Encode(cipherText);
 
-            return $"{cipherText}|{digest}";
+            return JsonMessage(freshMessage);
         }
 
         public string DecodeAndDecryptMessage(string msg)
         {
-            AuthenticateMessage(ref msg);
-            string plainText = RSAKeys.Decrypt(msg);
-            VerifyNonce(ParseKey(ref plainText));
+            string jsonString = RSAKeys.Decrypt(AuthenticateMessage(msg));
+            JsonFreshMessage jsonFreshMessage = JsonConvert.DeserializeObject<JsonFreshMessage>(jsonString);
 
-            return plainText;
+            VerifyNonce(jsonFreshMessage.Nonce);
+
+            return jsonFreshMessage.Message;
         }
+
 
         public void SetDeviceKey(string content)
         {
-            string copy = content;
-
-            VerifyNonce(ParseKey(ref copy));
-
-            DevicePublicKey = RSAKeys.KeyFromString(ParseKey(ref copy, true));
+            string key = DecodeAndDecryptMessage(content);
+            DevicePublicKey = JsonConvert.DeserializeObject<RSAParameters>(key);
         }
 
         public void VerifyNonce(string nonce)
@@ -77,21 +80,32 @@ namespace HostLocker
             if (!Nonce.Equals(nonce)) throw new Exception("Invalid nonce!\n");
         }
 
-        public void AuthenticateMessage(ref string message)
+        public string AuthenticateMessage(string message)
         {
-            string digest = ParseKey(ref message);
-            if (!digest.Equals(DigestKey.Encode(message))) throw new Exception("Message was corrupted!\n");
-        }
+            JsonCryptoDigestMessage jsonCryptoDigestMessage = JsonConvert.DeserializeObject<JsonCryptoDigestMessage>(message);
+            if (!jsonCryptoDigestMessage.Digest.Equals(DigestKey.Encode(message))) throw new Exception("Message was corrupted!\n");
 
-        public static string ParseKey(ref string content, bool last = false) {
-            Regex regex = new Regex(@"^(\w+)\|(\w+)|(\w+)$");
-            Match match = regex.Match(content);
-            if (match.Success)
-            {
-                content = (last ? match.Groups[0].Value : match.Groups[1].Value);
-                return (last ? match.Groups[3].Value : match.Groups[2].Value);
-            }
-            throw new Exception("Invalid string content!\n.");
+            return jsonCryptoDigestMessage.Cryptotext;
+        }
+    }
+
+    public class JsonFreshMessage{
+        public string Message { get; set; }
+        public string Nonce { get; set; }
+
+        public JsonFreshMessage(string msg, string nonce){
+            Message = msg;
+            Nonce = nonce;
+        }
+    }
+
+    public class JsonCryptoDigestMessage {
+        public string Cryptotext { get; set; }
+        public string Digest { get; set; }
+
+        public JsonCryptoDigestMessage(string cipher, string digest) {
+            Cryptotext = cipher;
+            Digest = digest;
         }
     }
 }
