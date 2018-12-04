@@ -9,7 +9,7 @@ using System.Net.Sockets;
 namespace HostLocker {
     class BluetoothClientWrapper {
         private BluetoothClient _bluetoothClient;
-        private BluetoothDeviceInfo _bluetoothDeviceInfo;
+        public BluetoothDeviceInfo BluetoothDeviceInfo { get; set; }
 
         public BluetoothClientWrapper(BluetoothClient bc) {
             _bluetoothClient = bc;
@@ -19,15 +19,7 @@ namespace HostLocker {
             return _bluetoothClient;
         }
 
-        public BluetoothDeviceInfo GetDeviceInfo() {
-            return _bluetoothDeviceInfo;
-        }
-
-        public void SetDeviceInfo(BluetoothDeviceInfo info) {
-            _bluetoothDeviceInfo = info;
-        }
-
-        public bool sendMessage(String msg) {
+        public bool SendMessage(String msg) {
             try {
                 if (msg.Trim().Length != 0) {
                     Console.WriteLine(msg);

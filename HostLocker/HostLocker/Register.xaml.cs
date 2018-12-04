@@ -1,29 +1,23 @@
 ﻿using InTheHand.Net;
-using InTheHand.Net.Bluetooth;
 using InTheHand.Net.Sockets;
-using QRCoder;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Drawing;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Interop;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using Newtonsoft.Json;
 using System.Linq;
 
 namespace HostLocker {
     /// <summary>
-    /// Interaction logic for MainWindow.xaml
+    /// Interaction logic for RegisterWindow.xaml
     /// </summary>
-    public partial class MainWindow : Window {
+    public partial class RegisterWindow : UserControl, ISwitchable {
         BackgroundWorker bg;
-        BluetoothAddress selectedDeviceAddress;
+        BluetoothAddress _selectedDeviceAddress;
         BluetoothManager bm;
+        private UserDevice UserDevice { get; set;}
 
-        public MainWindow() {
+        public RegisterWindow() {
             InitializeComponent();
             bg = new BackgroundWorker();
             bm = new BluetoothManager(this);
@@ -64,11 +58,11 @@ namespace HostLocker {
             if (device_list.SelectedItem != null) {
                 Device device = (Device)device_list.SelectedItem;
                 connect_to_device.Visibility = Visibility.Visible;
-                selectedDeviceAddress = device.DeviceAddress;
+                _selectedDeviceAddress = device.DeviceAddress;
                 UpdateInfo(device);
             } else {
                 connect_to_device.Visibility = Visibility.Hidden;
-                selectedDeviceAddress = null;
+                _selectedDeviceAddress = null;
             }
         }
 
@@ -81,28 +75,31 @@ namespace HostLocker {
         }
 
         private async void connect_to_device_Click(object sender, RoutedEventArgs e) {
-            if (selectedDeviceAddress != null) {
-                bm.Pair(selectedDeviceAddress, "1111");
+            if (_selectedDeviceAddress != null) {
+                bm.Pair(_selectedDeviceAddress, "1111");
             }
         }
 
         private async void Button_Click(object sender, RoutedEventArgs e) {
-            pb.Visibility = Visibility.Visible;
             listen_btn.Visibility = Visibility.Hidden;
-            stop_listen_btn.Visibility = Visibility.Visible;
-            QrCodeImage.Visibility = Visibility.Visible;
-            QRCodeImage();
+            SetVisibilityOfElements(new object[] {pb, stop_listen_btn, QrCodeImage}, Visibility.Visible);
+            UserDevice = new UserDevice();
+            QrCodeManager qrCodeManager = new QrCodeManager(UserDevice);
+            QrCodeImage.Source = qrCodeManager.GenerateQrImage();
             await bm.ReceiveConnection();
-            if (bm.RemoteClient() != null) {
-                bm.VerifyClient(bm.RemoteClient().ReadFromBtDevice());
-                UpdateInfo(new Device(bm.RemoteClient().GetDeviceInfo()));
+            if (bm.BluetoothRemoteClient != null)
+            {
+                string devicePubKey = bm.BluetoothRemoteClient.ReadFromBtDevice();
+                bm.VerifyClient();
+                UserDevice.SetDeviceKey(UserDevice.DecodeAndDecryptMessage(devicePubKey));
+                UserDevice.AssociateDevice(bm.BluetoothRemoteClient.BluetoothDeviceInfo);
+                UpdateInfo(new Device(UserDevice.BlDeviceInfo));
                 success_txt.Visibility = Visibility.Visible;
-                bm.RemoteClient().sendMessage("AKNOWLEDGE THIS NUTS NIBBA");
+                bm.BluetoothRemoteClient.SendMessage(UserDevice.EncryptAndEncodeMessage("AKNOWLEDGE THIS NUTS NIBBA"));
                 bm.Dispose(true);
             }
-            QrCodeImage.Visibility = Visibility.Hidden;
             QrCodeImage.Source = null;
-            pb.Visibility = Visibility.Hidden;
+            SetVisibilityOfElements(new object[] { pb, QrCodeImage }, Visibility.Hidden);
             //Console.WriteLine(bc.ReadFromBtDevice());
             //bc.sendMessage("It wokrs||!!");
         }
@@ -111,43 +108,17 @@ namespace HostLocker {
             bm.Dispose(true);
         }
 
-        private ImageSource ImageSourceForBitmap(Bitmap bmp) {
-            var handle = bmp.GetHbitmap();
-            try {
-                return Imaging.CreateBitmapSourceFromHBitmap(handle, IntPtr.Zero, Int32Rect.Empty, BitmapSizeOptions.FromEmptyOptions());
+        public void UtilizeState(object state)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void SetVisibilityOfElements(object[] elements, Visibility visibility)
+        {
+            foreach (Control element in elements)
+            {
+                element.Visibility = visibility;
             }
-            finally { }
-        }
-
-        private void QRCodeImage() {
-            InitializeComponent();
-            QRCodeGenerator qrGenerator = new QRCodeGenerator();
-            QRCodeData qrCodeData = qrGenerator.CreateQrCode(QrCodeContent(), QRCodeGenerator.ECCLevel.Q);
-            QRCode qrCode = new QRCode(qrCodeData);
-            Bitmap qrCodeImage = qrCode.GetGraphic(50);
-
-            QrCodeImage.Source = ImageSourceForBitmap(qrCodeImage);
-        }
-
-        public string GenerateNonce() {
-            bm.nonce = Guid.NewGuid().ToString("N");
-            return bm.nonce;
-        }
-
-        private string QrCodeContent() {
-            return JsonConvert.SerializeObject(new QRCodeObject(GenerateNonce(), "Kcpub", "Kd"));
-        }
-    }
-
-    public class QRCodeObject {
-        public string Nonce;
-        public string KcPub;
-        public string Kd;
-
-        public QRCodeObject(string nonce, string kcpub, string kd) {
-            Nonce = nonce;
-            KcPub = kcpub;
-            Kd = kd;
         }
     }
 }

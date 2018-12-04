@@ -17,7 +17,7 @@ namespace HostLocker {
     class BluetoothManager {
         private bool _beginConnect;
         private BluetoothClient _bluetoothClient;
-        private BluetoothClientWrapper _bluetoothRemoteClient = null;
+        public BluetoothClientWrapper BluetoothRemoteClient { get; set; } = null;
         public BluetoothListener bl { get; set; }
         private bool serverStarted = false;
         public string nonce;
@@ -32,10 +32,10 @@ namespace HostLocker {
         BluetoothComponent localComponent;
         // List of Devices Found
         public List<BluetoothDeviceInfo> deviceList = new List<BluetoothDeviceInfo>();
-        MainWindow _window;
+        RegisterWindow _window;
         List<Device> devicesWrapper = new List<Device>();
 
-        public BluetoothManager(MainWindow window) {
+        public BluetoothManager(RegisterWindow window) {
             _window = window;
             LOCAL_MAC = GetBTMacAddress();
             if (LOCAL_MAC != null) {
@@ -61,10 +61,6 @@ namespace HostLocker {
                     return device;
             }
             return null;
-        }
-
-        public BluetoothClientWrapper RemoteClient() {
-            return _bluetoothRemoteClient;
         }
 
         public static BluetoothAddress GetBTMacAddress() {
@@ -129,7 +125,7 @@ namespace HostLocker {
                     Task<BluetoothClientWrapper> task = Task<BluetoothClientWrapper>.Factory.FromAsync(bl.BeginAcceptBluetoothClient, AcceptConnection, bl);
                     BluetoothClientWrapper result = await task;
                     if (task.IsCompleted) {
-                        _bluetoothRemoteClient = result;
+                        BluetoothRemoteClient = result;
                     }
                 }
             }
@@ -143,19 +139,15 @@ namespace HostLocker {
             return (Dictionary<string, string>)JsonConvert.DeserializeObject(code);
         }
 
-        public void VerifyClient(string response) {
+        public void VerifyClient() {
             BluetoothDeviceInfo device;
             foreach (BluetoothDeviceInfo dev in deviceList) {
-                if(dev.DeviceName == _bluetoothRemoteClient.GetClient().RemoteMachineName) {
-                    Console.WriteLine("Auth");
+                if(dev.DeviceName == BluetoothRemoteClient.GetClient().RemoteMachineName) {
                     device = dev;
                     device.Refresh();
-                    _bluetoothRemoteClient.SetDeviceInfo(device);
+                    BluetoothRemoteClient.BluetoothDeviceInfo = device;
                     if (device.Authenticated && device.Remembered && device.Connected) {
-                        if (nonce == response) {
                             return;
-                        }
-                        throw new Exception("No valid nonce!");
                     }
                     throw new Exception("Not Authenticated!");
                 }

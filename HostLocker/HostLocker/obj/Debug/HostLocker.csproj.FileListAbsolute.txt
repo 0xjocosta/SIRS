@@ -45,12 +45,10 @@ F:\SIRS\HostLocker\HostLocker\bin\Debug\InTheHand.Net.Personal.dll
 F:\SIRS\HostLocker\HostLocker\bin\Debug\QRCoder.dll
 F:\SIRS\HostLocker\HostLocker\bin\Debug\System.Drawing.Common.dll
 F:\SIRS\HostLocker\HostLocker\bin\Debug\InTheHand.Net.Personal.xml
-F:\SIRS\HostLocker\HostLocker\obj\Debug\MainWindow.g.cs
 F:\SIRS\HostLocker\HostLocker\obj\Debug\QRCode.g.cs
 F:\SIRS\HostLocker\HostLocker\obj\Debug\App.g.cs
 F:\SIRS\HostLocker\HostLocker\obj\Debug\HostLocker_MarkupCompile.cache
 F:\SIRS\HostLocker\HostLocker\obj\Debug\HostLocker_MarkupCompile.lref
-F:\SIRS\HostLocker\HostLocker\obj\Debug\MainWindow.baml
 F:\SIRS\HostLocker\HostLocker\obj\Debug\QRCode.baml
 F:\SIRS\HostLocker\HostLocker\obj\Debug\HostLocker.g.resources
 F:\SIRS\HostLocker\HostLocker\obj\Debug\HostLocker.Properties.Resources.resources
@@ -63,3 +61,7 @@ F:\SIRS\HostLocker\HostLocker\obj\Debug\HostLocker.csprojAssemblyReference.cache
 F:\SIRS\HostLocker\HostLocker\bin\Debug\Newtonsoft.Json.dll
 F:\SIRS\HostLocker\HostLocker\bin\Debug\Newtonsoft.Json.pdb
 F:\SIRS\HostLocker\HostLocker\bin\Debug\Newtonsoft.Json.xml
+F:\SIRS\HostLocker\HostLocker\obj\Debug\WindowSwitcher.g.cs
+F:\SIRS\HostLocker\HostLocker\obj\Debug\Register.baml
+F:\SIRS\HostLocker\HostLocker\obj\Debug\Register.g.cs
+F:\SIRS\HostLocker\HostLocker\obj\Debug\WindowSwitcher.baml

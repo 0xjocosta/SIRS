@@ -71,12 +71,22 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="AESManager.cs" />
     <Compile Include="BluetoothClientWrapper.cs" />
+    <Compile Include="HMACManger.cs" />
+    <Compile Include="ISwitchable.cs" />
+    <Compile Include="QrCodeManager.cs" />
+    <Compile Include="RSAManager.cs" />
     <Compile Include="Server.cs" />
     <Compile Include="QRCode.xaml.cs">
       <DependentUpon>QRCode.xaml</DependentUpon>
     </Compile>
-    <Page Include="MainWindow.xaml">
+    <Compile Include="Switcher.cs" />
+    <Compile Include="UserDevice.cs" />
+    <Compile Include="WindowSwitcher.xaml.cs">
+      <DependentUpon>WindowSwitcher.xaml</DependentUpon>
+    </Compile>
+    <Page Include="Register.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
@@ -86,11 +96,15 @@
     </Compile>
     <Compile Include="BluetoothManager.cs" />
     <Compile Include="Device.cs" />
-    <Compile Include="MainWindow.xaml.cs">
-      <DependentUpon>MainWindow.xaml</DependentUpon>
+    <Compile Include="Register.xaml.cs">
+      <DependentUpon>Register.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
     <Page Include="QRCode.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="WindowSwitcher.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -121,6 +135,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="HostLockerIcon.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

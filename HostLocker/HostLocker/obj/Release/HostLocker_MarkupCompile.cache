@@ -4,15 +4,15 @@
 winexe
 C#
 .cs
-F:\SIRS\HostLocker\HostLocker\obj\Debug\
+F:\SIRS\HostLocker\HostLocker\obj\Release\
 HostLocker
 none
 false
-DEBUG;TRACE
+TRACE
 F:\SIRS\HostLocker\HostLocker\App.xaml
 31907837588
 
-22202014884
+18412775678
 212144498954
 Register.xaml;QRCode.xaml;WindowSwitcher.xaml;
 
