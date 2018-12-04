@@ -14,10 +14,7 @@ namespace HostLocker {
 
         public HMACManger()
         {
-            using (RNGCryptoServiceProvider rng = new RNGCryptoServiceProvider()) {
-                // The array is now filled with cryptographically strong random bytes.
-                rng.GetBytes(SecretKey);
-            }
+            RefreshSecretKey();
         }
 
         public string GetSecretKeyString()
@@ -25,8 +22,16 @@ namespace HostLocker {
             return Encoding.ASCII.GetString(SecretKey);
         }
 
+        public void RefreshSecretKey()
+        {
+            using (RNGCryptoServiceProvider rng = new RNGCryptoServiceProvider()) {
+                // The array is now filled with cryptographically strong random bytes.
+                rng.GetBytes(SecretKey);
+            }
+        }
+
         public string Encode(string message) {
-            byte[] messageBytes = Encoding.ASCII.GetBytes(message);
+            byte[] messageBytes = Encoding.Unicode.GetBytes(message);
 
             using (var hmacsha256 = new HMACSHA256(SecretKey)) {
                 byte[] hashmessage = hmacsha256.ComputeHash(messageBytes);
