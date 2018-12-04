@@ -1,0 +1,61 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:minWidth="25px"
+    android:minHeight="25px">
+    <Toolbar
+        android:minHeight="?android:attr/actionBarSize"
+        android:background="?android:attr/colorPrimary"
+        android:minWidth="25px"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/toolbar1">
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/backToMainFromConnection"
+            android:text="@string/backToMainFromConnection" />
+    </Toolbar>
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/startButton"
+        android:text="@string/startButton" />
+    <Button
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/stopButton"
+        android:layout_marginRight="0.0dp"
+        android:text="@string/stopButton" />
+    <Space
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/space1" />
+    <Space
+        android:layout_width="match_parent"
+        android:layout_height="86.0dp"
+        android:id="@+id/space2" />
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="522.0dp"
+        android:id="@+id/debugLog"
+        android:layout_marginBottom="418.0dp" />
+    <TextureView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/textureView1" />
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:id="@+id/pairedDevices" />
+    <AbsoluteLayout
+        android:minWidth="25px"
+        android:minHeight="25px"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:id="@+id/absoluteLayout1"
+        android:layout_marginBottom="0.0dp" />
+</LinearLayout>
