@@ -7,6 +7,7 @@ using Android.Runtime;
 using Android.Views;
 using Android.Widget;
 using Android.OS;
+using System.Text;
 
 namespace Key
 {
@@ -30,8 +31,14 @@ namespace Key
 
             SecurityManager securityManager = new SecurityManager();
             Console.WriteLine("USING GET PUBLIC KEY");
-            //Console.WriteLine(securityManager.GetPublicKey());
+            Console.WriteLine(securityManager.GetMyPublicKey());
+            string content = "hello world";
+            Console.WriteLine("Content: " + content);
+            byte[] bytes = Encoding.ASCII.GetBytes(content);
 
+            byte[] encryptedContent = securityManager.Encrypt(bytes);
+            string newContent = securityManager.Decrypt(encryptedContent);
+            Console.WriteLine("New Content: " + newContent);
             //#################################################################
             // My Code
 
