@@ -12,7 +12,7 @@ namespace HostLocker
 {
     class UserDevice
     {
-        public HMACManger DigestKey { get; set; }
+        public HMACManager DigestKey { get; set; }
         public string Nonce { get; set; }
         public AesManager SymmetricKey { get; set; }
         public BluetoothDeviceInfo BlDeviceInfo { get; set; }
@@ -22,7 +22,7 @@ namespace HostLocker
         public UserDevice()
         {
             RSAKeys = new RSAManager();
-            DigestKey = new HMACManger();
+            DigestKey = new HMACManager();
             Nonce = Guid.NewGuid().ToString("N");
         }
 
