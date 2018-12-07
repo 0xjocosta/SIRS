@@ -28,6 +28,9 @@ namespace Key
 
             button.Click += delegate { button.Text = $"{count++} clicks!"; };
 
+            SecurityManager securityManager = new SecurityManager();
+            Console.WriteLine("USING GET PUBLIC KEY");
+            //Console.WriteLine(securityManager.GetPublicKey());
 
             //#################################################################
             // My Code

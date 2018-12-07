@@ -26,8 +26,6 @@ namespace Key
 		
 		public static void UpdateIdValues()
 		{
-			global::PCLCrypto.Resource.String.ApplicationName = global::Key.Resource.String.ApplicationName;
-			global::PCLCrypto.Resource.String.Hello = global::Key.Resource.String.Hello;
 		}
 		
 		public partial class Animation
@@ -2572,12 +2570,6 @@ namespace Key
 		public partial class String
 		{
 			
-			// aapt resource value: 0x7f070031
-			public const int ApplicationName = 2131165233;
-			
-			// aapt resource value: 0x7f070030
-			public const int Hello = 2131165232;
-			
 			// aapt resource value: 0x7f070011
 			public const int abc_action_bar_home_description = 2131165201;
 			
@@ -2665,11 +2657,11 @@ namespace Key
 			// aapt resource value: 0x7f070021
 			public const int abc_toolbar_collapse_description = 2131165217;
 			
-			// aapt resource value: 0x7f070033
-			public const int app_name = 2131165235;
+			// aapt resource value: 0x7f070031
+			public const int app_name = 2131165233;
 			
-			// aapt resource value: 0x7f070036
-			public const int backToMainFromConnection = 2131165238;
+			// aapt resource value: 0x7f070034
+			public const int backToMainFromConnection = 2131165236;
 			
 			// aapt resource value: 0x7f070001
 			public const int common_google_play_services_enable_button = 2131165185;
@@ -2722,26 +2714,26 @@ namespace Key
 			// aapt resource value: 0x7f070010
 			public const int common_signin_button_text_long = 2131165200;
 			
-			// aapt resource value: 0x7f070034
-			public const int connectHost = 2131165236;
-			
 			// aapt resource value: 0x7f070032
-			public const int hello = 2131165234;
+			public const int connectHost = 2131165234;
 			
-			// aapt resource value: 0x7f070035
-			public const int register = 2131165237;
+			// aapt resource value: 0x7f070030
+			public const int hello = 2131165232;
+			
+			// aapt resource value: 0x7f070033
+			public const int register = 2131165235;
 			
 			// aapt resource value: 0x7f070022
 			public const int search_menu_title = 2131165218;
 			
-			// aapt resource value: 0x7f070037
-			public const int startButton = 2131165239;
+			// aapt resource value: 0x7f070035
+			public const int startButton = 2131165237;
 			
 			// aapt resource value: 0x7f07002f
 			public const int status_bar_notification_info_overflow = 2131165231;
 			
-			// aapt resource value: 0x7f070038
-			public const int stopButton = 2131165240;
+			// aapt resource value: 0x7f070036
+			public const int stopButton = 2131165238;
 			
 			static String()
 			{

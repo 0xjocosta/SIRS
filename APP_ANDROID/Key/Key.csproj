@@ -124,6 +124,8 @@
     <Compile Include="RegisterActivity.cs" />
     <Compile Include="ConnectionManager.cs" />
     <Compile Include="SecurityManager.cs" />
+    <Compile Include="HMACManager.cs" />
+    <Compile Include="RSAManager.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\AboutResources.txt" />

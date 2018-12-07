@@ -20,14 +20,20 @@ namespace Key
     [Activity(Label = "ConnectionActivity")]
     public class ConnectionActivity : Activity
     {
+        //Connection Manager
+        ConnectionManager connectionManager;
+
         bool CONNECTED = false;
 
         Button btnstart;
         Button btnstop;
+
+        //SOCKET INFO
         BluetoothSocket mmSocket = null;
         Stream inputStream;
         Stream outputStream;
 
+        //DEBUG INFO
         TextView txtDebug;
 
         Dictionary<string, string> dict = new Dictionary<string, string>() {
@@ -107,7 +113,6 @@ namespace Key
                 var intent = new Intent(this, typeof(MainActivity));
                 StartActivity(intent);
             };
-            // Create your application here
         }
 
         private void Btnstop_Click(object sender, EventArgs e)
@@ -142,6 +147,10 @@ namespace Key
                     devBluetooth = dev;
                 }
                 AdapterState = defaultAdapter.State;
+
+                connectionManager = new ConnectionManager(devBluetooth);
+                connectionManager.ConnectingToDevice();
+
                 ConnectingToDevice(devBluetooth);
             }
             else
@@ -260,6 +269,7 @@ namespace Key
             }
             catch (IOException) { }
         }
+
 
         /*
         public async void SaveCountAsync(string str, string FileName)

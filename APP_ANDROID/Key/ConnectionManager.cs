@@ -15,25 +15,32 @@ namespace Key
         Stream outputStream;
         TextView txtDebug;
 
-        public ConnectionManager()
+        BluetoothDevice bluetoothDevice;
+
+        public ConnectionManager(BluetoothDevice dev)
         {
-            private void ConnectingToDevice(BluetoothDevice dev)
+            bluetoothDevice = dev;
+            //Debug
+            //txtDebug = FindViewById<TextView>(Resource.Id.debugLog);
+        }
+
+        public void ConnectingToDevice()
+        {
+            UUID myUUID = UUID.FromString("00001101-0000-1000-8000-00805F9B34FB");
+            BluetoothSocket tmp = null;
+            try
             {
-                UUID myUUID = UUID.FromString("00001101-0000-1000-8000-00805F9B34FB");
-                BluetoothSocket tmp = null;
-                try
-                {
-                    // MY_UUID is the app's UUID string, also used by the server code
-                    tmp = dev.CreateRfcommSocketToServiceRecord(myUUID);
-                }
-                catch (System.IO.IOException)
-                {
-                    Console.WriteLine("FAILED TO CREATE SOCKET");
-                }
-                mmSocket = tmp;
-                BluetoothAdapter defaultAdapter = BluetoothAdapter.DefaultAdapter;
-                defaultAdapter.CancelDiscovery();
+                // MY_UUID is the app's UUID string, also used by the server code
+                tmp = bluetoothDevice.CreateRfcommSocketToServiceRecord(myUUID);
             }
+            catch (System.IO.IOException)
+            {
+                Console.WriteLine("FAILED TO CREATE SOCKET");
+            }
+            mmSocket = tmp;
+            BluetoothAdapter defaultAdapter = BluetoothAdapter.DefaultAdapter;
+            defaultAdapter.CancelDiscovery();
+
             try
             {
                 // Connect the device through the socket. This will block
@@ -56,7 +63,11 @@ namespace Key
                 }
                 return;
             }
+
+            // Do work to manage the connection (in a separate thread)
+            ManageConnectedSocket();
         }
+
         /* Call this from the main activity to send data to the remote device */
         public void WriteToSocket(string str)
         {
