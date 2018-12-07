@@ -65,3 +65,5 @@ F:\SIRS\HostLocker\HostLocker\obj\Debug\WindowSwitcher.g.cs
 F:\SIRS\HostLocker\HostLocker\obj\Debug\Register.baml
 F:\SIRS\HostLocker\HostLocker\obj\Debug\Register.g.cs
 F:\SIRS\HostLocker\HostLocker\obj\Debug\WindowSwitcher.baml
+F:\SIRS\HostLocker\HostLocker\obj\Debug\FilesWindow.g.cs
+F:\SIRS\HostLocker\HostLocker\obj\Debug\FilesWindow.baml

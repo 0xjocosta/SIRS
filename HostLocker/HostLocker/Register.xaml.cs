@@ -125,5 +125,14 @@ namespace HostLocker {
                 element.Visibility = visibility;
             }
         }
+
+
+        /*
+         https://ourcodeworld.com/articles/read/471/how-to-encrypt-and-decrypt-files-using-the-aes-encryption-algorithm-in-c-sharp
+         *https://www.didisoft.com/net-openpgp/examples/keystore/
+         * https://docs.microsoft.com/en-us/dotnet/api/system.security.cryptography.protecteddata?redirectedfrom=MSDN&view=netframework-4.7.2
+         * https://stackoverflow.com/questions/4967325/best-way-to-store-encryption-keys-in-net-c-sharp
+         *
+         */
     }
 }

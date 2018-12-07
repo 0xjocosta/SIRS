@@ -142,7 +142,7 @@ namespace HostLocker {
         public void VerifyClient() {
             BluetoothDeviceInfo device;
             foreach (BluetoothDeviceInfo dev in deviceList) {
-                if(dev.DeviceName == BluetoothRemoteClient.GetClient().RemoteMachineName) {
+                if(dev.DeviceAddress.Sap == BluetoothRemoteClient.GetClient().RemoteEndPoint.Address.Sap) {
                     device = dev;
                     device.Refresh();
                     BluetoothRemoteClient.BluetoothDeviceInfo = device;

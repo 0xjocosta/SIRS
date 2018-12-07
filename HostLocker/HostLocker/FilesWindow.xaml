@@ -1,0 +1,18 @@
+﻿<UserControl x:Class="HostLocker.FilesWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:HostLocker"
+        mc:Ignorable="d"
+        Height="450" Width="800" Background="White">
+    <DockPanel Margin="10,0,10,9.6" Height="430" VerticalAlignment="Bottom">
+        <WrapPanel HorizontalAlignment="Center" DockPanel.Dock="Top" Margin="143,0,143,10" Width="494">
+            <Button x:Name="add_content" Click="add_content_Click" Content="Add" Margin="10,5,10,5" Width="80" Height="40"/>
+            <Button x:Name="remove_content" Content="Remove" Margin="45,5,0,5" Width="80" Height="40" Click="remove_content_Click"/>
+            <Button x:Name="save_content" Content="Save" Margin="45,5,5,5" Width="80" Height="40" Click="save_content_Click"/>
+            <Button x:Name="back_btn" Content="Back" Margin="45,5,5,5" Width="80" Height="40" Click="back_btn_Click"/>
+        </WrapPanel>
+        <ListBox Name="lbFiles" Margin="0,1.8,0,0.4" Width="494" SelectionMode="Multiple"/>
+    </DockPanel>
+</UserControl>
