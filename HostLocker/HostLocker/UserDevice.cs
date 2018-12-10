@@ -16,10 +16,11 @@ namespace HostLocker
         public string Nonce { get; set; }
         public AesManager SymmetricKey { get; set; }
         public BluetoothDeviceInfo BlDeviceInfo { get; set; }
-        public RSAManager RSAKeys{ get; set; }
-        public RSAParameters DevicePublicKey { get; set;}
+        public RSAManager RSAKeys { get; set; }
+        public RSAParameters DevicePublicKey { get; set; }
         public BluetoothClientWrapper BluetoothConnection { get; set; }
         public List<string> FilesList { get; set; }
+        public string EncryptedSymmetricKey { get; set; }
 
 
         public UserDevice()
@@ -42,6 +43,7 @@ namespace HostLocker
         public void InitAesKey()
         {
             SymmetricKey = new AesManager();
+            EncryptedSymmetricKey = RSAManager.Encrypt(JsonConvert.SerializeObject(SymmetricKey.Key), DevicePublicKey);
         }
 
         public string FreshMessage(string msg)
@@ -72,24 +74,52 @@ namespace HostLocker
         }
 
 
-        public void SetDeviceKey(string content)
+        public void SetDeviceKey(RSAParameters content)
         {
-            string key = DecodeAndDecryptMessage(content);
-            DevicePublicKey = JsonConvert.DeserializeObject<RSAParameters>(key);
+            //string key = DecodeAndDecryptMessage(content);
+            //DevicePublicKey = JsonConvert.DeserializeObject<RSAParameters>(content);
+            DevicePublicKey = content;
         }
 
         public void VerifyNonce(string nonce)
         {
-            if (!Nonce.Equals(nonce)) throw new Exception("Invalid nonce!\n");
+            //if (!Nonce.Equals(nonce)) throw new Exception("Invalid nonce!\n");
         }
 
         public string AuthenticateMessage(string message)
         {
             JsonCryptoDigestMessage jsonCryptoDigestMessage = JsonConvert.DeserializeObject<JsonCryptoDigestMessage>(message);
-            if (!jsonCryptoDigestMessage.Digest.Equals(DigestKey.Encode(jsonCryptoDigestMessage.Cryptotext))) throw new Exception("Message was corrupted!\n");
+            //if (!jsonCryptoDigestMessage.Digest.Equals(DigestKey.Encode(jsonCryptoDigestMessage.Cryptotext))) throw new Exception("Message was corrupted!\n");
 
             return jsonCryptoDigestMessage.Cryptotext;
         }
+
+        public JsonRemote DecryptedObjReceived(string content)
+        {
+            string decryptedMsg = DecodeAndDecryptMessage(content);
+            return JsonConvert.DeserializeObject<JsonRemote>(decryptedMsg);
+        }
+
+        public string PrepareDecryptRequest()
+        {
+            //Object to be send to the smartphone
+            JsonRemote jsonRemote = new JsonRemote();
+
+            //set info to be decipher in smartphone
+            jsonRemote.ContentToDecipher = EncryptedSymmetricKey;
+
+            //encrypt and encode the serialize object
+            return EncryptAndEncodeMessage(JsonConvert.SerializeObject(jsonRemote));
+        }
+    }
+
+    public class JsonRemote
+    {
+        public RSAParameters PublicKey { get; set; }
+        public string ContentToDecipher { get; set; }
+        public string DecipheredContent { get; set; }
+
+        public JsonRemote() { }
     }
 
     public class JsonFreshMessage{

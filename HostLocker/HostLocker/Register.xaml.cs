@@ -6,6 +6,7 @@ using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
 using System.Linq;
+using Newtonsoft.Json;
 
 namespace HostLocker {
     /// <summary>
@@ -87,21 +88,38 @@ namespace HostLocker {
             stop_listen_btn.Visibility = Visibility.Visible;
             QrCodeImage.Visibility = Visibility.Visible;
             UserDevice = new UserDevice();
+            
+
             QrCodeManager qrCodeManager = new QrCodeManager(UserDevice);
             QrCodeImage.Source = qrCodeManager.GenerateQrImage();
             await bm.ReceiveConnection();
             if (bm.BluetoothRemoteClient != null)
             {
-                string devicePubKey = bm.BluetoothRemoteClient.ReadFromBtDevice();
+                string messageReceived = bm.BluetoothRemoteClient.ReadFromBtDevice();
                 bm.VerifyClient();
-                UserDevice.SetDeviceKey(devicePubKey);
+                JsonRemote messageDecrypted = UserDevice.DecryptedObjReceived(messageReceived);
+                UserDevice.SetDeviceKey(messageDecrypted.PublicKey);
                 UserDevice.InitAesKey();
                 UserDevice.AssociateDevice(bm.BluetoothRemoteClient.BluetoothDeviceInfo);
+                string request = UserDevice.PrepareDecryptRequest();
+
                 //UpdateInfo(new Device(UserDevice.BlDeviceInfo));
                 //success_txt.Visibility = Visibility.Visible;
-                bm.BluetoothRemoteClient.SendMessage(UserDevice.EncryptAndEncodeMessage("AKNOWLEDGE THIS NUTS NIBBA"));
+
+                bm.BluetoothRemoteClient.SendMessage(request);
+                string requestResponse = bm.BluetoothRemoteClient.ReadFromBtDevice();
+                //Handle the response
+                string decryptedKey = UserDevice.DecodeAndDecryptMessage(requestResponse);
+                JsonRemote decryptedObject = JsonConvert.DeserializeObject<JsonRemote>(decryptedKey);
+                byte[] aesManager = JsonConvert.DeserializeObject<byte[]>(decryptedObject.DecipheredContent);
+                Console.WriteLine(decryptedKey);
+                Console.WriteLine("CHAVE SIMETRICAAAAAAA");
+                Console.WriteLine(UserDevice.SymmetricKey.ToString());
+
+
                 UserDevice.BluetoothConnection = bm.BluetoothRemoteClient;
                 Switcher.Switch(new FilesWindow(), UserDevice);
+
                 //bm.Dispose(true);
             }
             QrCodeImage.Source = null;

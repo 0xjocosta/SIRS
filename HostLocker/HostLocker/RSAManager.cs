@@ -32,7 +32,7 @@ namespace HostLocker
         }
 
         public string KeyToString(RSAParameters key) {
-            Console.WriteLine($"{Encoding.Unicode.GetString(key.Modulus)}");
+            Console.WriteLine($"{Encoding.ASCII.GetString(key.Modulus)}");
             var sw = new StringWriter();
             var xs = new System.Xml.Serialization.XmlSerializer(typeof(RSAParameters));
 
@@ -61,7 +61,7 @@ namespace HostLocker
             Provider = new RSACryptoServiceProvider();
 
             //for encryption, always handle bytes...
-            byte[] bytesPlainTextData = Encoding.Unicode.GetBytes(plainTextData);
+            byte[] bytesPlainTextData = Encoding.ASCII.GetBytes(plainTextData);
      
             Provider.ImportParameters(key);
 
@@ -84,7 +84,7 @@ namespace HostLocker
             byte[] bytesPlainTextData = Provider.Decrypt(bytesCypherText, true);
 
             //get our original plainText back...
-            return Encoding.Unicode.GetString(bytesPlainTextData);
+            return Encoding.ASCII.GetString(bytesPlainTextData);
         }
 
         public string Decrypt(string cypherText)
