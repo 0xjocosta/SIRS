@@ -15,7 +15,7 @@ namespace HostLocker {
         BackgroundWorker bg;
         BluetoothAddress _selectedDeviceAddress;
         BluetoothManager bm;
-        private UserDevice UserDevice { get; set;}
+        private UserDevice UserDevice { get; set; }
 
         public RegisterWindow() {
             InitializeComponent();
@@ -95,16 +95,19 @@ namespace HostLocker {
                 string devicePubKey = bm.BluetoothRemoteClient.ReadFromBtDevice();
                 bm.VerifyClient();
                 UserDevice.SetDeviceKey(devicePubKey);
+                UserDevice.InitAesKey();
                 UserDevice.AssociateDevice(bm.BluetoothRemoteClient.BluetoothDeviceInfo);
-                UpdateInfo(new Device(UserDevice.BlDeviceInfo));
-                success_txt.Visibility = Visibility.Visible;
+                //UpdateInfo(new Device(UserDevice.BlDeviceInfo));
+                //success_txt.Visibility = Visibility.Visible;
                 bm.BluetoothRemoteClient.SendMessage(UserDevice.EncryptAndEncodeMessage("AKNOWLEDGE THIS NUTS NIBBA"));
-                bm.Dispose(true);
+                UserDevice.BluetoothConnection = bm.BluetoothRemoteClient;
+                Switcher.Switch(new FilesWindow(), UserDevice);
+                //bm.Dispose(true);
             }
             QrCodeImage.Source = null;
             //SetVisibilityOfElements(new object[] { pb, QrCodeImage }, Visibility.Hidden);
-            pb.Visibility = Visibility.Visible;
-            QrCodeImage.Visibility = Visibility.Visible;
+            pb.Visibility = Visibility.Hidden;
+            QrCodeImage.Visibility = Visibility.Hidden;
             //Console.WriteLine(bc.ReadFromBtDevice());
             //bc.sendMessage("It wokrs||!!");
         }

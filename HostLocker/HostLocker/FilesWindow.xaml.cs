@@ -7,14 +7,16 @@ using System.Windows.Controls;
 using Microsoft.Win32;
 using Path = System.IO.Path;
 using System.Security.AccessControl;
+using System.Text;
 
 namespace HostLocker {
     /// <summary>
     /// Interaction logic for FilesWindow.xaml
     /// </summary>
     public partial class FilesWindow : UserControl, ISwitchable {
-        private List<string> files;
         private AesManager aes;
+        private UserDevice Device;
+
         public FilesWindow() {
             InitializeComponent();
             aes = new AesManager();
@@ -34,7 +36,10 @@ namespace HostLocker {
         }
 
         public void UtilizeState(object state) {
-            throw new NotImplementedException();
+            if (state != null)
+            {
+                Device = (UserDevice) state;
+            }
         }
 
         private void remove_content_Click(object sender, RoutedEventArgs e)
@@ -47,16 +52,33 @@ namespace HostLocker {
         {
             foreach (var file in lbFiles.Items)
             {
-                //files.Add(file.ToString());
+                Device.FilesList.Add(file.ToString());
                 aes.EncryptFile_Aes(file.ToString());
             }
+
+            DataProtector.SaveData(CreateDataObject());
         }
 
         private void back_btn_Click(object sender, RoutedEventArgs e) {
             foreach (var file in lbFiles.Items) {
-                //files.Add(file.ToString());
+                //Device.FilesList.Remove(file.ToString());
                 aes.DecryptFile_Aes(file.ToString()+".aes", file.ToString() + ".dec");
             }
+        }
+
+        private UserData CreateDataObject()
+        {
+            UserData ud = new UserData();
+            //ud.BlDeviceInfo = Device.BlDeviceInfo;
+            ud.DevicePublicKey = Device.DevicePublicKey;
+            //ud.EncryptedUserAesKey = RSAManager.Encrypt(Encoding.ASCII.GetString(Device.SymmetricKey.Key), Device.DevicePublicKey);
+            ud.UserAesInitVect = Device.SymmetricKey.InitVect;
+            ud.UserPrivKey = Device.RSAKeys.PrivKey;
+            ud.UserPubKey = Device.RSAKeys.PubKey;
+            ud.UserSecretKey = Device.DigestKey.SecretKey;
+            ud.files = Device.FilesList;
+
+            return ud;
         }
     }
 }

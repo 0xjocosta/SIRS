@@ -51,13 +51,13 @@ namespace HostLocker {
                 byte[] bytes = new byte[1024];
                 string retrievedMsg = "";
 
-                stream.Read(bytes, 0, 512);
+                stream.Read(bytes, 0, 1024);
                 stream.Flush();
 
                 for (int i = 0; i < bytes.Length; i++) {
                     
-                    byte c = Convert.ToByte('|');
-                    //retrievedMsg += Convert.ToChar(bytes[i]);
+                    byte c = Convert.ToByte('\0');
+
                     if(bytes[i] != c)
                     {
                         retrievedMsg += Convert.ToChar(bytes[i]);

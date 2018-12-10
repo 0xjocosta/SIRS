@@ -7,7 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace HostLocker {
-    class HMACManager
+    public class HMACManager
     {
 
         public byte[] SecretKey {get; set;} = new Byte[64];

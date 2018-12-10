@@ -78,7 +78,7 @@
     <Compile Include="FilesWindow.xaml.cs">
       <DependentUpon>FilesWindow.xaml</DependentUpon>
     </Compile>
-    <Compile Include="HMACManger.cs" />
+    <Compile Include="HMACManager.cs" />
     <Compile Include="ISwitchable.cs" />
     <Compile Include="QrCodeManager.cs" />
     <Compile Include="RSAManager.cs" />

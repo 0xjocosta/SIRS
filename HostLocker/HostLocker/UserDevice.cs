@@ -18,6 +18,9 @@ namespace HostLocker
         public BluetoothDeviceInfo BlDeviceInfo { get; set; }
         public RSAManager RSAKeys{ get; set; }
         public RSAParameters DevicePublicKey { get; set;}
+        public BluetoothClientWrapper BluetoothConnection { get; set; }
+        public List<string> FilesList { get; set; }
+
 
         public UserDevice()
         {
@@ -47,8 +50,8 @@ namespace HostLocker
         }
 
         public string JsonMessage(string msg) {
-            string cipherText = RSAKeys.Encrypt(msg, DevicePublicKey);
-            return JsonConvert.SerializeObject(new JsonCryptoDigestMessage(cipherText, DigestKey.Encode(cipherText)));
+            //string cipherText = RSAKeys.Encrypt(msg, DevicePublicKey); UNCOMMENT THIS TO USE  FOR CONFIDENTIALITY
+            return JsonConvert.SerializeObject(new JsonCryptoDigestMessage(msg, DigestKey.Encode(msg)));
         }
 
         public string EncryptAndEncodeMessage(string msg)
@@ -60,8 +63,8 @@ namespace HostLocker
 
         public string DecodeAndDecryptMessage(string msg)
         {
-            string jsonString = RSAKeys.Decrypt(AuthenticateMessage(msg));
-            JsonFreshMessage jsonFreshMessage = JsonConvert.DeserializeObject<JsonFreshMessage>(jsonString);
+            //string jsonString = RSAKeys.Decrypt(AuthenticateMessage(msg));
+            JsonFreshMessage jsonFreshMessage = JsonConvert.DeserializeObject<JsonFreshMessage>(AuthenticateMessage(msg));
 
             VerifyNonce(jsonFreshMessage.Nonce);
 
@@ -83,7 +86,7 @@ namespace HostLocker
         public string AuthenticateMessage(string message)
         {
             JsonCryptoDigestMessage jsonCryptoDigestMessage = JsonConvert.DeserializeObject<JsonCryptoDigestMessage>(message);
-            if (!jsonCryptoDigestMessage.Digest.Equals(DigestKey.Encode(message))) throw new Exception("Message was corrupted!\n");
+            if (!jsonCryptoDigestMessage.Digest.Equals(DigestKey.Encode(jsonCryptoDigestMessage.Cryptotext))) throw new Exception("Message was corrupted!\n");
 
             return jsonCryptoDigestMessage.Cryptotext;
         }

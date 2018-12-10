@@ -1,51 +1,45 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Runtime.Serialization;
+using System.Runtime.Serialization.Formatters.Binary;
 using System.Security.Cryptography;
 using System.Text;
+using InTheHand.Net.Sockets;
 
 
 namespace HostLocker {
     //TODO: IMPLEMENT THIS, THE PURPOSE OF THIS CLASS IS TO SAVE SECURELY THE KEYS
     class DataProtector {
-        public static void Run() {
-            try {
-                //TODO: MAYBE USE ENTROPY AND STORE IT IN THE FIRST BYTES OF THE GENERATED FILE 
-                // Create the original data to be encrypted
-                byte[] toEncrypt = UnicodeEncoding.ASCII.GetBytes("This is some data of any length.");
 
-                // Create a file.
-                FileStream fStream = new FileStream("Data.dat", FileMode.OpenOrCreate);
+        public static void SaveData(UserData userData)
+        {
+            FileStream fStream = new FileStream($"C:\\Users\\extre\\Desktop\\user_test_data.dat", FileMode.OpenOrCreate);
+            byte[] binaryObj = ObjectToByteArray(userData);
+            EncryptDataToStream(binaryObj, DataProtectionScope.LocalMachine, fStream);
 
-                Console.WriteLine();
-                Console.WriteLine("Original data: " + UnicodeEncoding.ASCII.GetString(toEncrypt));
-                Console.WriteLine("Encrypting and writing to disk...");
-
-                // Encrypt a copy of the data to the stream.
-                int bytesWritten = EncryptDataToStream(toEncrypt, DataProtectionScope.CurrentUser, fStream);
-
-                fStream.Close();
-
-                Console.WriteLine("Reading data from disk and decrypting...");
-
-                // Open the file.
-                fStream = new FileStream("Data.dat", FileMode.Open);
-
-                // Read from the stream and decrypt the data.
-                byte[] decryptData = DecryptDataFromStream(DataProtectionScope.CurrentUser, fStream, bytesWritten);
-
-                fStream.Close();
-
-                Console.WriteLine("Decrypted data: " + UnicodeEncoding.ASCII.GetString(decryptData));
-
-
-            }
-            catch (Exception e) {
-                Console.WriteLine("ERROR: " + e.Message);
-            }
-
+            fStream.Close();
         }
 
-        public static int EncryptDataToStream(byte[] Buffer, DataProtectionScope Scope, Stream S) {
+        public static UserData LoadData(string sap) {
+            FileStream fStream = new FileStream($"C:\\Users\\extre\\Desktop\\user_{sap}_data.dat", FileMode.Open);
+            byte[] decryptData = DecryptDataFromStream(DataProtectionScope.LocalMachine, fStream);
+            fStream.Close();
+
+            return (UserData)ByteArrayToObject(decryptData);
+        }
+
+        private static byte[] ObjectToByteArray(object obj) {
+            if (obj == null)
+                return null;
+            BinaryFormatter bf = new BinaryFormatter();
+            using (MemoryStream ms = new MemoryStream()) {
+                bf.Serialize(ms, obj);
+                return ms.ToArray();
+            }
+        }
+
+        private static int EncryptDataToStream(byte[] Buffer, DataProtectionScope Scope, Stream S) {
             if (Buffer == null)
                 throw new ArgumentNullException("Buffer");
             if (Buffer.Length <= 0)
@@ -67,31 +61,54 @@ namespace HostLocker {
 
             // Return the length that was written to the stream. 
             return length;
-
         }
 
-        public static byte[] DecryptDataFromStream(DataProtectionScope Scope, Stream S, int Length) {
+        private static byte[] DecryptDataFromStream(DataProtectionScope Scope, Stream S) {
             if (S == null)
                 throw new ArgumentNullException("S");
-            if (Length <= 0)
-                throw new ArgumentException("Length");
 
-            byte[] inBuffer = new byte[Length];
             byte[] outBuffer;
-
             // Read the encrypted data from a stream.
-            if (S.CanRead) {
-                S.Read(inBuffer, 0, Length);
-
-                outBuffer = ProtectedData.Unprotect(inBuffer, null, Scope);
+            using (S)
+            {
+                if (S.CanRead) {
+                    var inBuffer = new byte[S.Length];
+                    S.Read(inBuffer, 0, (int)S.Length);
+                    outBuffer = ProtectedData.Unprotect(inBuffer, null, Scope);
+                }
+                else {
+                    throw new IOException("Could not read the stream.");
+                }
             }
-            else {
-                throw new IOException("Could not read the stream.");
-            }
 
-            // Return the length that was written to the stream. 
+            // Return the byte array that contains the decrypted data. 
             return outBuffer;
-
         }
+
+        private static Object ByteArrayToObject(byte[] arrBytes) {
+            using (MemoryStream memStream = new MemoryStream())
+            {
+                BinaryFormatter binForm = new BinaryFormatter();
+                memStream.Write(arrBytes, 0, arrBytes.Length);
+                memStream.Seek(0, SeekOrigin.Begin);
+                Object obj = (Object)binForm.Deserialize(memStream);
+
+                return obj;
+            }
+        }
+    }
+
+    [Serializable()]
+    public class UserData
+    {
+        public byte[] UserSecretKey { get; set; }
+        public string UserNonce { get; set; }
+        public string EncryptedUserAesKey { get; set; }
+        public byte[] UserAesInitVect { get; set; }
+        //public BluetoothDeviceInfo BlDeviceInfo { get; set; }
+        public RSAParameters UserPrivKey { get; set; }
+        public RSAParameters UserPubKey { get; set; }
+        public RSAParameters DevicePublicKey { get; set; }
+        public List<string> files { get; set; }
     }
 }

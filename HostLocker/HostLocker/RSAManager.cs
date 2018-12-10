@@ -8,11 +8,11 @@ using System.IO;
 
 namespace HostLocker
 {
-    class RSAManager
+    public class RSAManager
     {
         public RSAParameters PrivKey { get; set; }
         public RSAParameters PubKey { get; set; }
-        public RSACryptoServiceProvider Provider { get; set; }
+        public static RSACryptoServiceProvider Provider { get; set; }
 
         public RSAManager() {
             //lets take a new CSP with a new 2048 bit rsa key pair
@@ -23,6 +23,12 @@ namespace HostLocker
 
             //and the public key ...
             PubKey = Provider.ExportParameters(false);
+        }
+
+        public RSAManager(RSAParameters pub, RSAParameters priv)
+        {
+            PubKey = pub;
+            PrivKey = priv;
         }
 
         public string KeyToString(RSAParameters key) {
@@ -51,7 +57,7 @@ namespace HostLocker
             return (RSAParameters)xs.Deserialize(sr);
         }
 
-        public string Encrypt(string plainTextData, RSAParameters key) {
+        public static string Encrypt(string plainTextData, RSAParameters key) {
             Provider = new RSACryptoServiceProvider();
 
             //for encryption, always handle bytes...

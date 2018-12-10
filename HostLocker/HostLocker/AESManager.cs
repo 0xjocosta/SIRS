@@ -10,7 +10,7 @@ using System.Security.Cryptography;
 
 namespace HostLocker
 {
-    class AesManager
+    public class AesManager
     {
         //  Call this function to remove the key from memory after use for security
         [DllImport("KERNEL32.DLL", EntryPoint = "RtlZeroMemory")]
