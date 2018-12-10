@@ -1,127 +1,111 @@
 ﻿using System;
 using System.Security.Cryptography;
 using Newtonsoft.Json;
-using Java.Security;
-using Android.Security.Keystore;
-using Javax.Crypto;
-using Javax.Crypto.Spec;
-using Android.Util;
-using System.Text;
 
 namespace Key
 {
-    public class SecurityManager
+    class SecurityManager
     {
-        private static readonly string KEYSTORE_NAME = "AndroidKeyStore";
-        private static readonly string KEY_ALIAS = "PairKeys";
-        private static readonly int KEY_SIZE = 2048;
-        private KeyStore keyStore;
+        public HMACManager DigestKey { get; set; }
+        public string Nonce { get; set; }
+        public RSAManager RSAKeys { get; set; }
+        public RSAParameters PcPublicKey { get; set;}
 
-        private RSAManager rsaManager;
-        private string Nonce { get; set; }
-
-        //variables to save
-        private static readonly string nonce = "Nonce";
-        private static readonly string KeycPub = "KcPub";
-        private static readonly string KeyDigest = "Kd";
-
-        private static readonly string KeyPub = "KsPub";
-        private static readonly string KeyPriv = "KsPri";
-
-        private IPrivateKey privKey;
-        private KeyPair keys;
         public SecurityManager()
         {
-            keyStore = KeyStore.GetInstance(KEYSTORE_NAME);     
-            keyStore.Load(null);
-            GenerateNonce();
-            GeneratePairKeys();
-            /*rsaManager = new RSAManager();
-            Console.WriteLine("PUBLICCCCCCCCCCCCCCCCCCCCCCC");
-            Console.WriteLine(rsaManager.PubKey);
-            Console.WriteLine("PRIVATEEEEEEEEEEEEEEEEEEEEEEEE");
-            Console.WriteLine(rsaManager.PrivKey);*/
+            RSAKeys = new RSAManager();
+            Nonce = Guid.NewGuid().ToString("N");
         }
 
-        public string GenerateNonce()
-        {
+        private string GenerateNonce() {
             Nonce = Guid.NewGuid().ToString("N");
             return Nonce;
         }
 
-        private void GeneratePairKeys()
+        public string FreshMessage(string msg)
         {
-            try
-            {
-                // Get the KeyPairGenerator instance for RSA
-                KeyPairGenerator keyPairGenerator = KeyPairGenerator.GetInstance(KeyProperties.KeyAlgorithmRsa, KEYSTORE_NAME);
-
-                // The KeyGenParameterSpec is how parameters for your key are passed to the generator.
-                /*keyPairGenerator.Initialize(new KeyGenParameterSpec.Builder(
-                    KEY_ALIAS, KeyStorePurpose.Decrypt | KeyStorePurpose.Encrypt)
-                    .SetBlockModes("ECB")
-                    .SetEncryptionPaddings("NOPADDING")
-                    .SetKeySize(KEY_SIZE)
-                    .Build());
-                */
-
-                keyPairGenerator.Initialize(2048);
-                //Generate keys
-                keys = keyPairGenerator.GenerateKeyPair();
-                privKey = keyPairGenerator.GenerateKeyPair().Private;
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine("Not possible to generate the keys: " + e);
-            }
-
-            Console.WriteLine("Public in generator");
-            Console.WriteLine(keys.Public);
+            return JsonConvert.SerializeObject(new JsonFreshMessage(msg, Nonce/*GenerateNonce()*/));
         }
 
-        private IKey GetPrivKey()
-        {
-            KeyStore.IEntry entry = keyStore.GetEntry(KEY_ALIAS, null);
-            return ((KeyStore.PrivateKeyEntry)entry).PrivateKey;
+        public string JsonMessage(string msg) {
+            string cipherText = msg;
+            //string cipherText = RSAKeys.Encrypt(msg, PcPublicKey);
+            return JsonConvert.SerializeObject(new JsonCryptoDigestMessage(cipherText, DigestKey.Encode(cipherText)));
         }
 
-        private Java.Security.Cert.Certificate GetMyCertificate()
+        public string EncryptAndEncodeMessage(string msg)
         {
-            return keyStore.GetCertificate(KEY_ALIAS);
+            string freshMessage = FreshMessage(msg);
+
+            return JsonMessage(freshMessage);
         }
 
-        public byte[] GetMyPublicKey()
+        public string DecodeAndDecryptMessage(string msg)
         {
-            return GetMyCertificate().PublicKey.GetEncoded();
+            string jsonString = msg;
+            //string jsonString = RSAKeys.Decrypt(AuthenticateMessage(msg));
+            JsonFreshMessage jsonFreshMessage = JsonConvert.DeserializeObject<JsonFreshMessage>(AuthenticateMessage(jsonString));
+
+            //VerifyNonce(jsonFreshMessage.Nonce);
+
+            return jsonFreshMessage.Message;
         }
 
-        private void SaveKeyIntoKeyStore(byte[] key, string alias)
+        public void VerifyNonce(string nonce)
         {
-            keyStore.SetKeyEntry(alias, key, null);
+            if (!Nonce.Equals(nonce)) throw new Exception("Invalid nonce!\n");
         }
 
-        public void SaveHostPublicKey(byte[] key)
+        public string AuthenticateMessage(string message)
         {
-            SaveKeyIntoKeyStore(key, KeycPub);
+            JsonCryptoDigestMessage jsonCryptoDigestMessage = JsonConvert.DeserializeObject<JsonCryptoDigestMessage>(message);
+            if (!jsonCryptoDigestMessage.Digest.Equals(DigestKey.Encode(jsonCryptoDigestMessage.Cryptotext))) throw new Exception("Message was corrupted!\n");
+
+            return jsonCryptoDigestMessage.Cryptotext;
         }
 
-        public byte[] Encrypt(byte[] content)
+        public void SetDigestKey(byte[] key)
         {
-            Cipher encryptCipher = Cipher.GetInstance("RSA/ECB/NOPADDING");
-            encryptCipher.Init(Javax.Crypto.CipherMode.EncryptMode, keys.Public);
-
-            byte[] cipherText = encryptCipher.DoFinal(content);
-
-            return cipherText;
-            //return Base64.EncodeToString(cipherText, Base64Flags.Default);
+            DigestKey = new HMACManager(key);
         }
 
-        public string Decrypt(byte[] content)
+        public void SetPcPublicKey(RSAParameters content)
         {
-            Cipher decriptCipher = Cipher.GetInstance("RSA/ECB/NOPADDING");
-            decriptCipher.Init(Javax.Crypto.CipherMode.DecryptMode, keys.Private);
+            PcPublicKey = content;
+        }
 
-            return Encoding.ASCII.GetString(content);
+        public string DecryptContentFromHost(string content)
+        {
+            return RSAKeys.Decrypt(content);
+        }
+    }
+
+    public class JsonRemote
+    {
+        public RSAParameters PublicKey { get; set; }
+        public string ContentToDecipher { get; set; }
+        public string DecipheredContent { get; set; }
+
+        public JsonRemote() { }
+    }
+
+    public class JsonFreshMessage{
+        public string Message { get; set; }
+        public string Nonce { get; set; }
+
+        public JsonFreshMessage(string msg, string nonce){
+            Message = msg;
+            Nonce = nonce;
+        }
+    }
+
+    public class JsonCryptoDigestMessage {
+        public string Cryptotext { get; set; }
+        public string Digest { get; set; }
+
+        public JsonCryptoDigestMessage(string cipher, string digest) {
+            Cryptotext = cipher;
+            Digest = digest;
         }
     }
 }
