@@ -131,7 +131,9 @@ namespace Key
         private void SendRegisterInfo(QrCodeObject qrCodeObj)
         {
             securityManager.Nonce = qrCodeObj.Nonce;
-            string content = JsonConvert.SerializeObject(securityManager.RSAKeys.PubKey);
+            JsonRemote message = new JsonRemote();
+            message.PublicKey = securityManager.RSAKeys.PubKey;
+            string content = JsonConvert.SerializeObject(message);
             string strToSend = securityManager.EncryptAndEncodeMessage(content);
             WriteToSocket(strToSend);
         }
@@ -141,7 +143,7 @@ namespace Key
         {
             try
             {
-                Console.Write("WRITE TO SOCKET");
+                Console.WriteLine("WRITE TO SOCKET");
                 byte[] bytes = Encoding.ASCII.GetBytes(str);
                 outputStream.Write(bytes, 0, bytes.Length);
 
@@ -161,7 +163,7 @@ namespace Key
                 try
                 {
                     // Read from the InputStream
-                    int x = await inputStream.ReadAsync(buffer, 0, 1024);
+                    await inputStream.ReadAsync(buffer, 0, 1024);
                     string str = Encoding.ASCII.GetString(buffer);
                     txtDebug.Text += "Receiving: " + str + '\n';
 
@@ -179,7 +181,21 @@ namespace Key
         private void ManageConnectedSocket(string buffer)
         {
             string decryptedBuffer = securityManager.DecodeAndDecryptMessage(buffer);
-            dynamic message = JsonConvert.DeserializeObject(decryptedBuffer);
+            Console.WriteLine("JSON REMOTE RECEIVED");
+            Console.WriteLine(decryptedBuffer);
+            JsonRemote message = JsonConvert.DeserializeObject<JsonRemote>(decryptedBuffer);
+
+            //Send the decrypted symmetric Key
+            string decryptedContent = securityManager.DecryptContentFromHost(message.ContentToDecipher);
+            Console.WriteLine("DECRYPTED CONTENT");
+            Console.WriteLine(decryptedContent);
+            JsonRemote jsonMessage = new JsonRemote
+            {
+                DecipheredContent = decryptedContent
+            };
+            string content = JsonConvert.SerializeObject(jsonMessage);
+            string strToSend = securityManager.EncryptAndEncodeMessage(content);
+            WriteToSocket(strToSend);
         }
     }
 

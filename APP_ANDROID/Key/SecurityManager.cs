@@ -24,7 +24,7 @@ namespace Key
 
         public string FreshMessage(string msg)
         {
-            return JsonConvert.SerializeObject(new JsonFreshMessage(msg, Nonce/*GenerateNonce()*/, GenerateNonce()));
+            return JsonConvert.SerializeObject(new JsonFreshMessage(msg, Nonce/*GenerateNonce()*/));
         }
 
         public string JsonMessage(string msg) {
@@ -46,7 +46,7 @@ namespace Key
             //string jsonString = RSAKeys.Decrypt(AuthenticateMessage(msg));
             JsonFreshMessage jsonFreshMessage = JsonConvert.DeserializeObject<JsonFreshMessage>(AuthenticateMessage(jsonString));
 
-            VerifyNonce(jsonFreshMessage.LastNonce);
+            //VerifyNonce(jsonFreshMessage.Nonce);
 
             return jsonFreshMessage.Message;
         }
@@ -71,31 +71,31 @@ namespace Key
 
         public void SetPcPublicKey(RSAParameters content)
         {
-            //string key = content;
-            Console.WriteLine("PUBLIC KEYYYYY");
-            //Console.WriteLine(key);
-            //string key = DecodeAndDecryptMessage(content);
-            PcPublicKey = content;//JsonConvert.DeserializeObject<RSAParameters>(key);
+            PcPublicKey = content;
+        }
+
+        public string DecryptContentFromHost(string content)
+        {
+            return RSAKeys.Decrypt(content);
         }
     }
 
     public class JsonRemote
     {
-        public JsonRemote()
-        {
+        public RSAParameters PublicKey { get; set; }
+        public string ContentToDecipher { get; set; }
+        public string DecipheredContent { get; set; }
 
-        }
+        public JsonRemote() { }
     }
 
     public class JsonFreshMessage{
         public string Message { get; set; }
         public string Nonce { get; set; }
-        public string LastNonce { get; set; }
 
-        public JsonFreshMessage(string msg, string lastNonce, string newNonce){
+        public JsonFreshMessage(string msg, string nonce){
             Message = msg;
-            Nonce = newNonce;
-            LastNonce = lastNonce;
+            Nonce = nonce;
         }
     }
 
