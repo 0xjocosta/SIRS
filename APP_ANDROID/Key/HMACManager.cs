@@ -1,30 +1,22 @@
 ﻿using System;
 using System.Security.Cryptography;
 using System.Text;
+using Newtonsoft.Json;
 
 namespace Key {
-
     class HMACManager
     {
 
-        public byte[] SecretKey {get; set;} = new Byte[64];
+        public byte[] SecretKey {get; set;}
 
-        public HMACManager()
+        public HMACManager(byte[] digestKey)
         {
-            RefreshSecretKey();
+            SecretKey = digestKey;
         }
 
         public string GetSecretKeyString()
         {
             return Encoding.ASCII.GetString(SecretKey);
-        }
-
-        public void RefreshSecretKey()
-        {
-            using (RNGCryptoServiceProvider rng = new RNGCryptoServiceProvider()) {
-                // The array is now filled with cryptographically strong random bytes.
-                rng.GetBytes(SecretKey);
-            }
         }
 
         public string Encode(string message) {

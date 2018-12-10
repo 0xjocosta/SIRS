@@ -1,8 +1,10 @@
 ﻿using Android.Bluetooth;
 using Android.Widget;
 using Java.Util;
+using Newtonsoft.Json;
 using System;
 using System.IO;
+using System.Security.Cryptography;
 using System.Text;
 
 namespace Key
@@ -16,12 +18,19 @@ namespace Key
         TextView txtDebug;
 
         BluetoothDevice bluetoothDevice;
+        SecurityManager securityManager;
 
-        public ConnectionManager(BluetoothDevice dev)
+        string nonce = "Nonce";
+        string KeycPub = "KcPub";
+        string KeyDigest = "Kd";
+        string KeysPub = "KsPub";
+
+        public ConnectionManager(BluetoothDevice dev, TextView debugger=null)
         {
             bluetoothDevice = dev;
+            securityManager = new SecurityManager();
             //Debug
-            //txtDebug = FindViewById<TextView>(Resource.Id.debugLog);
+            txtDebug = debugger;
         }
 
         public void ConnectingToDevice()
@@ -65,22 +74,26 @@ namespace Key
             }
 
             // Do work to manage the connection (in a separate thread)
-            ManageConnectedSocket();
+            ConfigConnectedSocket();
         }
 
-        /* Call this from the main activity to send data to the remote device */
-        public void WriteToSocket(string str)
+        private void ConfigConnectedSocket()
         {
+            Stream tmpIn = null;
+            Stream tmpOut = null;
             try
             {
-                byte[] bytes = Encoding.ASCII.GetBytes(str + '|');
-                outputStream.Write(bytes, 0, bytes.Length);
-
-                txtDebug.Text += "Sending: " + str + '\n';
+                tmpIn = mmSocket.InputStream;
+                tmpOut = mmSocket.OutputStream;
             }
             catch (IOException) { }
+
+            inputStream = tmpIn;
+            outputStream = tmpOut;
         }
+
         /** Will cancel an in-progress connection, and close the socket */
+
         public void CancelConnection()
         {
             if (CONNECTED == false)
@@ -94,25 +107,93 @@ namespace Key
             catch (IOException) { }
         }
 
-        private void ManageConnectedSocket()
+        public void SetConnectionWithInfo(string qrCodeInfo)
         {
-            Stream tmpIn = null;
-            Stream tmpOut = null;
+            Console.Write("WITH INFO FROM REGISTER");
+            QrCodeObject qrCodeObj = JsonConvert.DeserializeObject<QrCodeObject>(qrCodeInfo);
+            securityManager.SetPcPublicKey(qrCodeObj.KcPub);
+            securityManager.SetDigestKey(qrCodeObj.Kd);
+            //dict[nonce] = dicKeys[nonce].Value;
+
+            ConnectingToDevice();
+            SendRegisterInfo(qrCodeObj);
+            Console.Write("END");
+            ListeningFromSocketAsync();
+        }
+
+        public void SetConnection()
+        {
+            Console.Write("WITHOUT INFO");
+            ConnectingToDevice();
+            ListeningFromSocketAsync();
+        }
+
+        private void SendRegisterInfo(QrCodeObject qrCodeObj)
+        {
+            securityManager.Nonce = qrCodeObj.Nonce;
+            string content = JsonConvert.SerializeObject(securityManager.RSAKeys.PubKey);
+            string strToSend = securityManager.EncryptAndEncodeMessage(content);
+            WriteToSocket(strToSend);
+        }
+
+        /* Call this from the main activity to send data to the remote device */
+        public void WriteToSocket(string str)
+        {
             try
             {
-                tmpIn = mmSocket.InputStream;
-                tmpOut = mmSocket.OutputStream;
+                Console.Write("WRITE TO SOCKET");
+                byte[] bytes = Encoding.ASCII.GetBytes(str);
+                outputStream.Write(bytes, 0, bytes.Length);
+
+                txtDebug.Text += "Sending: " + str + '\n';
             }
             catch (IOException) { }
+        }
 
-            inputStream = tmpIn;
-            outputStream = tmpOut;
+        private async void ListeningFromSocketAsync()
+        {
+            byte[] buffer = new byte[1024];  // buffer store for the stream
+            //int bytes; // bytes returned from read()
 
-        //security manager here 
-            //SendPubKey();
-        //chamada da funcao com activityUI portanto duvidum que fique
-            //ListeningFromSocketAsync();
+            // Keep listening to the InputStream until an exception occurs
+            while (true)
+            {
+                try
+                {
+                    // Read from the InputStream
+                    int x = await inputStream.ReadAsync(buffer, 0, 1024);
+                    string str = Encoding.ASCII.GetString(buffer);
+                    txtDebug.Text += "Receiving: " + str + '\n';
 
+                    ManageConnectedSocket(str);
+                    // Send the obtained bytes to the UI activity
+                    //mHandler.obtainMessage(MESSAGE_READ, bytes, -1, buffer).sendToTarget();
+                }
+                catch (IOException)
+                {
+                    break;
+                }
+            }
+        }
+
+        private void ManageConnectedSocket(string buffer)
+        {
+            string decryptedBuffer = securityManager.DecodeAndDecryptMessage(buffer);
+            dynamic message = JsonConvert.DeserializeObject(decryptedBuffer);
+        }
+    }
+
+    public class QrCodeObject
+    {
+        public string Nonce;
+        public RSAParameters KcPub;
+        public byte[] Kd;
+
+        public QrCodeObject(string nonce, RSAParameters kcpub, byte[] kd)
+        {
+            Nonce = nonce;
+            KcPub = kcpub;
+            Kd = kd;
         }
     }
 }

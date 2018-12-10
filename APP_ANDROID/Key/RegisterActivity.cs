@@ -130,6 +130,7 @@ namespace Key
         private void GoToConnection(String info)
         {
             var intent = new Intent(this, typeof(ConnectionActivity));
+            intent.PutExtra("LAST_PAGE", "REGISTER");
             intent.PutExtra("QRCodeInformation", info);
             StartActivity(intent);
         }
