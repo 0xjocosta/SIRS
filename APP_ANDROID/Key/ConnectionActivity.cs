@@ -55,45 +55,9 @@ namespace Key
         //QRCODE
         string qrCodeInfo = "";
 
-        private string SerializeJsonToString(string[] strings)
-        {
-            Dictionary<string, string> json = new Dictionary<string, string>();
-            foreach (string str in strings) {
-                json.Add(str,dict[str]);
-            }
-
-            return JsonConvert.SerializeObject(json);
-        }
-
-        private void SetInformationQrCode(string qrcode) {
-            dynamic dicKeys = JsonConvert.DeserializeObject(qrcode);
-            dict[nonce] = dicKeys[nonce].Value;
-            dict[KeycPub] = dicKeys[KeycPub].Value;
-            dict[KeyDigest] = dicKeys[KeyDigest].Value;
-        }
-
-        private void SendPubKey() {
-            string[] strings = { KeysPub, nonce };
-            string infoToSend = SerializeJsonToString(strings);
-            WriteToSocket(infoToSend);
-        }
-
         protected override void OnCreate(Bundle savedInstanceState)
         {
-            //string FileName = "qrcode.txt";
             base.OnCreate(savedInstanceState);
-            string extra = Intent.GetStringExtra("QRCodeInformation");
-
-            if (extra != "" && extra != "Please focus Camera to QR Code")
-            {
-                qrCodeInfo = extra;
-                //SaveCountAsync(qrCodeInfo, FileName);
-                Console.WriteLine(extra);
-                SetInformationQrCode(qrCodeInfo);
-            }
-
-            //qrCodeInfo = ReadFile(FileName);
-            Console.WriteLine(qrCodeInfo);
             // Set our view from the "main" layout resource
             SetContentView(Resource.Layout.Connection);
 
@@ -109,7 +73,11 @@ namespace Key
             Button backToMain = FindViewById<Button>(Resource.Id.backToMainFromConnection);
             backToMain.Click += (sender, e) =>
             {
-                CancelConnection();
+                BluetoothAdapter defaultAdapter = BluetoothAdapter.DefaultAdapter;
+                if (defaultAdapter.IsEnabled)
+                {
+                    defaultAdapter.Disable();
+                }
                 var intent = new Intent(this, typeof(MainActivity));
                 StartActivity(intent);
             };
@@ -117,7 +85,6 @@ namespace Key
 
         private void Btnstop_Click(object sender, EventArgs e)
         {
-            CancelConnection();
             BluetoothAdapter defaultAdapter = BluetoothAdapter.DefaultAdapter;
             if (defaultAdapter.IsEnabled)
             {
@@ -148,10 +115,21 @@ namespace Key
                 }
                 AdapterState = defaultAdapter.State;
 
-                connectionManager = new ConnectionManager(devBluetooth);
-                connectionManager.ConnectingToDevice();
+                connectionManager = new ConnectionManager(devBluetooth, txtDebug);
 
-                ConnectingToDevice(devBluetooth);
+                string lastPage = Intent.GetStringExtra("LAST_PAGE");
+                if (lastPage == "REGISTER")
+                {
+                    qrCodeInfo = Intent.GetStringExtra("QRCodeInformation");
+                    Console.WriteLine(qrCodeInfo);
+                    SetInformationQrCode(qrCodeInfo);
+
+                    connectionManager.SetConnectionWithInfo(qrCodeInfo);
+                }
+                else
+                {
+                    connectionManager.SetConnection();
+                }
             }
             else
             {
@@ -159,144 +137,26 @@ namespace Key
             }
         }
 
-        private void ConnectingToDevice(BluetoothDevice dev)
+
+        private void SetInformationQrCode(string qrcode)
         {
-            UUID myUUID = UUID.FromString("00001101-0000-1000-8000-00805F9B34FB");
-            BluetoothSocket tmp = null;
-            try
-            {
-                // MY_UUID is the app's UUID string, also used by the server code
-                tmp = dev.CreateRfcommSocketToServiceRecord(myUUID);
-            }
-            catch (System.IO.IOException) {
-                Console.WriteLine("FAILED TO CREATE SOCKET");
-            }
-            mmSocket = tmp;
-            BluetoothAdapter defaultAdapter = BluetoothAdapter.DefaultAdapter;
-            defaultAdapter.CancelDiscovery();
-
-            try
-            {
-                // Connect the device through the socket. This will block
-                // until it succeeds or throws an exception
-                mmSocket.Connect();
-                CONNECTED = true;
-            }
-            catch (IOException)
-            {
-                Console.WriteLine("FAILED TO CONNECT");
-                // Unable to connect; close the socket and get out
-                try
-                {
-                    mmSocket.Close();
-                    CONNECTED = false;
-                }
-                catch (IOException) {
-                    Console.WriteLine("FAILED TO CLOSE");
-                }
-                return;
-            }
-
-            // Do work to manage the connection (in a separate thread)
-            ManageConnectedSocket();
-        }
-
-        /** Will cancel an in-progress connection, and close the socket */
-        public void CancelConnection()
-        {
-            if (CONNECTED == false) {
-                return;
-            }
-            try
-            {
-                mmSocket.Close();
-            }
-            catch (IOException) { }
-        }
-
-        private void ManageConnectedSocket()
-        {
-            Stream tmpIn = null;
-            Stream tmpOut = null;
-            try
-            {
-                tmpIn = mmSocket.InputStream;
-                tmpOut = mmSocket.OutputStream;
-            }
-            catch (IOException) { }
-
-            inputStream = tmpIn;
-            outputStream = tmpOut;
-
-            SendPubKey();
-            ListeningFromSocketAsync();
-
-         }
-
-        private async void ListeningFromSocketAsync()
-        {
-            byte[] buffer = new byte[1024];  // buffer store for the stream
-            //int bytes; // bytes returned from read()
-
-            // Keep listening to the InputStream until an exception occurs
-            while (true)
-            {
-                try
-                {
-                    // Read from the InputStream
-                    int x = await inputStream.ReadAsync(buffer, 0, 1024);
-                    string str = Encoding.ASCII.GetString(buffer);
-                    txtDebug.Text += "Receiving: " + str + '\n';
-                    // Send the obtained bytes to the UI activity
-                    //mHandler.obtainMessage(MESSAGE_READ, bytes, -1, buffer).sendToTarget();
-                }
-                catch (IOException)
-                {
-                    break;
-                }
-            }
-        }
-
-        /* Call this from the main activity to send data to the remote device */
-        public void WriteToSocket(string str)
-        {
-            try
-            {
-                byte[] bytes = Encoding.ASCII.GetBytes(str + '|');
-                outputStream.Write(bytes, 0, bytes.Length);
-
-                txtDebug.Text += "Sending: " + str + '\n';
-            }
-            catch (IOException) { }
+            dynamic dicKeys = JsonConvert.DeserializeObject(qrcode);
+            dict[nonce] = dicKeys[nonce].Value;
+            dict[KeycPub] = dicKeys[KeycPub].Value;
+            dict[KeyDigest] = dicKeys[KeyDigest].Value;
         }
 
 
-        /*
-        public async void SaveCountAsync(string str, string FileName)
+
+        private string SerializeJsonToString(string[] strings)
         {
-            var backingFile = Path.Combine(System.Environment.GetFolderPath(System.Environment.SpecialFolder.Personal), FileName);
-            using (var writer = File.CreateText(backingFile))
+            Dictionary<string, string> json = new Dictionary<string, string>();
+            foreach (string str in strings)
             {
-                await writer.WriteLineAsync(str);
+                json.Add(str, dict[str]);
             }
+
+            return JsonConvert.SerializeObject(json);
         }
-
-        public string ReadFile(string FileName)
-        {
-            var backingFile = Path.Combine(System.Environment.GetFolderPath(System.Environment.SpecialFolder.Personal), FileName);
-            string output = "";
-
-            if (backingFile == null || !File.Exists(backingFile))
-            {
-                return output;
-            }
-
-            using (var reader = new StreamReader(backingFile, true))
-            {
-                output = reader.ReadToEnd();
-            }
-
-            return output;
-        }*/
     }
 }

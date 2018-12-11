@@ -29,16 +29,6 @@ namespace Key
 
             button.Click += delegate { button.Text = $"{count++} clicks!"; };
 
-            SecurityManager securityManager = new SecurityManager();
-            Console.WriteLine("USING GET PUBLIC KEY");
-            Console.WriteLine(securityManager.GetMyPublicKey());
-            string content = "hello world";
-            Console.WriteLine("Content: " + content);
-            byte[] bytes = Encoding.ASCII.GetBytes(content);
-
-            byte[] encryptedContent = securityManager.Encrypt(bytes);
-            string newContent = securityManager.Decrypt(encryptedContent);
-            Console.WriteLine("New Content: " + newContent);
             //#################################################################
             // My Code
 
@@ -48,6 +38,7 @@ namespace Key
             connectionButton.Click += (sender, e) =>
             {
                 var intent = new Intent(this, typeof(ConnectionActivity));
+                intent.PutExtra("LAST_PAGE", "MAIN");
                 StartActivity(intent);
             };
 
