@@ -43,7 +43,7 @@ namespace HostLocker
         public void InitAesKey()
         {
             SymmetricKey = new AesManager();
-            EncryptedSymmetricKey = RSAManager.Encrypt(JsonConvert.SerializeObject(SymmetricKey.Key), DevicePublicKey);
+            EncryptedSymmetricKey = RSAManager.Encrypt(JsonConvert.SerializeObject(SymmetricKey), DevicePublicKey);
         }
 
         public string FreshMessage(string msg)
@@ -107,7 +107,7 @@ namespace HostLocker
 
             //set info to be decipher in smartphone
             jsonRemote.ContentToDecipher = EncryptedSymmetricKey;
-
+            
             //encrypt and encode the serialize object
             return EncryptAndEncodeMessage(JsonConvert.SerializeObject(jsonRemote));
         }

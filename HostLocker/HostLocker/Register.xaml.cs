@@ -88,7 +88,6 @@ namespace HostLocker {
             stop_listen_btn.Visibility = Visibility.Visible;
             QrCodeImage.Visibility = Visibility.Visible;
             UserDevice = new UserDevice();
-            
 
             QrCodeManager qrCodeManager = new QrCodeManager(UserDevice);
             QrCodeImage.Source = qrCodeManager.GenerateQrImage();
@@ -111,10 +110,8 @@ namespace HostLocker {
                 //Handle the response
                 string decryptedKey = UserDevice.DecodeAndDecryptMessage(requestResponse);
                 JsonRemote decryptedObject = JsonConvert.DeserializeObject<JsonRemote>(decryptedKey);
-                byte[] aesManager = JsonConvert.DeserializeObject<byte[]>(decryptedObject.DecipheredContent);
-                Console.WriteLine(decryptedKey);
-                Console.WriteLine("CHAVE SIMETRICAAAAAAA");
-                Console.WriteLine(UserDevice.SymmetricKey.ToString());
+                AesManager aes = JsonConvert.DeserializeObject<AesManager>(decryptedObject.DecipheredContent);
+                
 
 
                 UserDevice.BluetoothConnection = bm.BluetoothRemoteClient;
