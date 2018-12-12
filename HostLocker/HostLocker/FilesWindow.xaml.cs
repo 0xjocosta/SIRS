@@ -120,7 +120,6 @@ namespace HostLocker {
             ud.UserPubKey = new RSAParametersSerializable(Device.rsaManager.PubKey);
             ud.UserSecretKey = Device.hmacManager.SecretKey;
             ud.Files = Device.FilesList;
-            Console.WriteLine($"Before saving: Encrypted: {ud.EncryptedUserAesKey}, IV: {ud.UserAesInitVect}");
             return ud;
         }
     }

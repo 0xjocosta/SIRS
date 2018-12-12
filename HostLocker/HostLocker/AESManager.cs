@@ -156,7 +156,11 @@ namespace HostLocker
             byte[] encrypted;
             // Create an AesCryptoServiceProvider object
             // with the specified key and InitVect.
-            using (AesCryptoServiceProvider aesAlg = SetupAesProvider()) {
+            using (AesCryptoServiceProvider aesAlg = new AesCryptoServiceProvider()) {
+                aesAlg.Mode = CipherMode.CBC;
+                aesAlg.BlockSize = _blockSize;
+                aesAlg.KeySize = _keySize;
+                aesAlg.Padding = _padding;
                 // Create an encryptor to perform the stream transform.
                 ICryptoTransform encryptor = aesAlg.CreateEncryptor(Key, InitVect);
                 // Create the streams used for encryption.
@@ -185,7 +189,11 @@ namespace HostLocker
             string plaintext;
             // Create an AesCryptoServiceProvider object
             // with the specified key and InitVect.
-            using (AesCryptoServiceProvider aesAlg = SetupAesProvider()) {
+            using (AesCryptoServiceProvider aesAlg = new AesCryptoServiceProvider()) {
+                aesAlg.Mode = CipherMode.CBC;
+                aesAlg.BlockSize = _blockSize;
+                aesAlg.KeySize = _keySize;
+                aesAlg.Padding = _padding;
                 // Create a decryptor to perform the stream transform.
                 ICryptoTransform decryptor = aesAlg.CreateDecryptor(Key, InitVect);
                 // Create the streams used for decryption.
