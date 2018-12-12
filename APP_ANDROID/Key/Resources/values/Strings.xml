@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="hello">Hello World, Click Me!</string>
-    <string name="app_name">KeyAndroid</string>
+    <string name="app_name">BlueKey</string>
     <string name="connectHost">Connect to Host</string>
     <string name="register">Register</string>
     <string name="backToMainFromConnection">Back to Main</string>

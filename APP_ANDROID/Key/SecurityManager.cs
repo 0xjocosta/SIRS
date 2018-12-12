@@ -6,15 +6,33 @@ namespace Key
 {
     class SecurityManager
     {
-        public HMACManager DigestKey { get; set; }
+        //public HMACManager DigestKey { get; set; }
         public string Nonce { get; set; }
-        public RSAManager RSAKeys { get; set; }
-        public RSAParameters PcPublicKey { get; set;}
+        public RSAManager RSAManager { get; set; }
+        //public RSAParameters PcPublicKey { get; set;}
+
+        private SecurityManagerHelper Helper;
+
+        public SecurityManager(RSAParameters pcPubKey, byte[] Kdigest)
+        {
+            Helper = new SecurityManagerHelper();
+            RSAManager RSAKeys = new RSAManager();
+            RSAManager = RSAKeys;
+            Helper.SavePairKey(RSAKeys.PubKey, RSAKeys.PrivKey);
+            Helper.SavePcPublicKey(pcPubKey);
+            Helper.SaveDigestKey(Kdigest);
+
+            Nonce = Guid.NewGuid().ToString("N");
+        }
 
         public SecurityManager()
         {
-            RSAKeys = new RSAManager();
-            Nonce = Guid.NewGuid().ToString("N");
+            Helper = new SecurityManagerHelper();
+        }
+
+        public RSAParameters GetPublicKey()
+        {
+            return Helper.GetPublicKey();
         }
 
         private string GenerateNonce() {
@@ -29,7 +47,9 @@ namespace Key
 
         public string JsonMessage(string msg) {
             string cipherText = msg;
-            //string cipherText = RSAKeys.Encrypt(msg, PcPublicKey);
+            RSAManager RSAKeys = new RSAManager(Helper.GetPcPublicKey());
+            //string cipherText = RSAKeys.Encrypt(msg);
+            HMACManager DigestKey = new HMACManager(Helper.GetDigestKey());
             return JsonConvert.SerializeObject(new JsonCryptoDigestMessage(cipherText, DigestKey.Encode(cipherText)));
         }
 
@@ -43,6 +63,7 @@ namespace Key
         public string DecodeAndDecryptMessage(string msg)
         {
             string jsonString = msg;
+            RSAManager RSAKeys = new RSAManager(Helper.GetPublicKey(), Helper.GetPrivateKey());
             //string jsonString = RSAKeys.Decrypt(AuthenticateMessage(msg));
             JsonFreshMessage jsonFreshMessage = JsonConvert.DeserializeObject<JsonFreshMessage>(AuthenticateMessage(jsonString));
 
@@ -58,24 +79,16 @@ namespace Key
 
         public string AuthenticateMessage(string message)
         {
+            HMACManager DigestKey = new HMACManager(Helper.GetDigestKey());
             JsonCryptoDigestMessage jsonCryptoDigestMessage = JsonConvert.DeserializeObject<JsonCryptoDigestMessage>(message);
             if (!jsonCryptoDigestMessage.Digest.Equals(DigestKey.Encode(jsonCryptoDigestMessage.Cryptotext))) throw new Exception("Message was corrupted!\n");
 
             return jsonCryptoDigestMessage.Cryptotext;
         }
 
-        public void SetDigestKey(byte[] key)
-        {
-            DigestKey = new HMACManager(key);
-        }
-
-        public void SetPcPublicKey(RSAParameters content)
-        {
-            PcPublicKey = content;
-        }
-
         public string DecryptContentFromHost(string content)
         {
+            RSAManager RSAKeys = new RSAManager(Helper.GetPublicKey(), Helper.GetPrivateKey());
             return RSAKeys.Decrypt(content);
         }
     }
@@ -85,7 +98,7 @@ namespace Key
         public RSAParameters PublicKey { get; set; }
         public string ContentToDecipher { get; set; }
         public string DecipheredContent { get; set; }
-
+        
         public JsonRemote() { }
     }
 

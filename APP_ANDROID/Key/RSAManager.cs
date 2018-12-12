@@ -8,13 +8,14 @@ using System.IO;
 
 namespace Key
 {
-    class RSAManager
+    public class RSAManager
     {
         public RSAParameters PrivKey { get; set; }
         public RSAParameters PubKey { get; set; }
-        public RSACryptoServiceProvider Provider { get; set; }
+        public static RSACryptoServiceProvider Provider { get; set; }
 
-        public RSAManager() {
+        public RSAManager()
+        {
             //lets take a new CSP with a new 2048 bit rsa key pair
             Provider = new RSACryptoServiceProvider(2048);
 
@@ -25,7 +26,19 @@ namespace Key
             PubKey = Provider.ExportParameters(false);
         }
 
-        public string KeyToString(RSAParameters key) {
+        public RSAManager(RSAParameters pub, RSAParameters priv)
+        {
+            PubKey = pub;
+            PrivKey = priv;
+        }
+
+        public RSAManager(RSAParameters pcPubKey)
+        {
+            PubKey = pcPubKey;
+        }
+
+        public string KeyToString(RSAParameters key)
+        {
             Console.WriteLine($"{Encoding.ASCII.GetString(key.Modulus)}");
             var sw = new StringWriter();
             var xs = new System.Xml.Serialization.XmlSerializer(typeof(RSAParameters));
@@ -40,23 +53,26 @@ namespace Key
             return KeyToString(PubKey);
         }
 
-        public string GetPrivateKeyString() {
+        public string GetPrivateKeyString()
+        {
             return KeyToString(PrivKey);
         }
 
-        public RSAParameters KeyFromString(string key) {
+        public RSAParameters KeyFromString(string key)
+        {
             var sr = new StringReader(key);
             var xs = new System.Xml.Serialization.XmlSerializer(typeof(RSAParameters));
 
             return (RSAParameters)xs.Deserialize(sr);
         }
 
-        public string Encrypt(string plainTextData, RSAParameters key) {
+        public static string Encrypt(string plainTextData, RSAParameters key)
+        {
             Provider = new RSACryptoServiceProvider();
 
             //for encryption, always handle bytes...
             byte[] bytesPlainTextData = Encoding.ASCII.GetBytes(plainTextData);
-     
+
             Provider.ImportParameters(key);
 
             byte[] bytesCypherText = Provider.Encrypt(bytesPlainTextData, true);
@@ -64,23 +80,21 @@ namespace Key
             //we might want a string representation of our cypher text... base64 will do
             return Convert.ToBase64String(bytesCypherText);
         }
-        public string Encrypt(string cypherText) {
+        public string Encrypt(string cypherText)
+        {
             return Encrypt(cypherText, PubKey);
         }
 
-        public string Decrypt(string cypherText, RSAParameters key) {
+        public string Decrypt(string cypherText, RSAParameters key)
+        {
             byte[] bytesCypherText = Convert.FromBase64String(cypherText);
-            Console.WriteLine("BEFORE DECRYPT");
-            string aaa = Encoding.ASCII.GetString(bytesCypherText);
-            Console.WriteLine(aaa);
+
             //we want to decrypt, therefore we need a csp and load our private key
             Provider = new RSACryptoServiceProvider();
             Provider.ImportParameters(key);
 
             byte[] bytesPlainTextData = Provider.Decrypt(bytesCypherText, true);
-            Console.WriteLine("AFTER DECRYPT");
-            string txt = Encoding.ASCII.GetString(bytesPlainTextData);
-            Console.WriteLine(txt);
+
             //get our original plainText back...
             return Encoding.ASCII.GetString(bytesPlainTextData);
         }

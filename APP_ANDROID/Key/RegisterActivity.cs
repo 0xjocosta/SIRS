@@ -17,7 +17,7 @@ using static Android.Gms.Vision.Detector;
 
 namespace Key
 {
-    [Activity(Label = "RegisterActivity", Theme = "@style/Theme.AppCompat.Light.NoActionBar")]
+    [Activity(Label = "Register", Theme = "@style/Theme.AppCompat.Light.NoActionBar")]
     public class RegisterActivity : AppCompatActivity, ISurfaceHolderCallback, IProcessor
     {
         SurfaceView cameraPreview;

@@ -17,40 +17,17 @@ using Android.Security;
 
 namespace Key
 {
-    [Activity(Label = "ConnectionActivity")]
+    [Activity(Label = "Connection", Theme = "@style/Theme.AppCompat.Light.NoActionBar")]
     public class ConnectionActivity : Activity
     {
         //Connection Manager
         ConnectionManager connectionManager;
 
-        bool CONNECTED = false;
-
         Button btnstart;
         Button btnstop;
 
-        //SOCKET INFO
-        BluetoothSocket mmSocket = null;
-        Stream inputStream;
-        Stream outputStream;
-
         //DEBUG INFO
         TextView txtDebug;
-
-        Dictionary<string, string> dict = new Dictionary<string, string>() {
-            {"Nonce", ""},
-            {"KcPub", ""},
-            {"Kd", ""},
-            {"KsPub", "KeySuckMI"},
-            {"KsPri", "KsPriv"}
-        };
-
-        //variables to save
-        string nonce = "Nonce";
-        string KeycPub = "KcPub";
-        string KeyDigest = "Kd";
-
-        string KeysPub = "KsPub";
-        string KeysPriv = "KsPri";
 
         //QRCODE
         string qrCodeInfo = "";
@@ -73,13 +50,18 @@ namespace Key
             Button backToMain = FindViewById<Button>(Resource.Id.backToMainFromConnection);
             backToMain.Click += (sender, e) =>
             {
-                BluetoothAdapter defaultAdapter = BluetoothAdapter.DefaultAdapter;
-                if (defaultAdapter.IsEnabled)
+                try { 
+                    BluetoothAdapter defaultAdapter = BluetoothAdapter.DefaultAdapter;
+                    if (defaultAdapter.IsEnabled)
+                    {
+                        defaultAdapter.Disable();
+                    }
+                    var intent = new Intent(this, typeof(MainActivity));
+                    StartActivity(intent);
+                } catch (Exception exc)
                 {
-                    defaultAdapter.Disable();
+                    Console.WriteLine(exc);
                 }
-                var intent = new Intent(this, typeof(MainActivity));
-                StartActivity(intent);
             };
         }
 
@@ -114,16 +96,12 @@ namespace Key
                     devBluetooth = dev;
                 }
                 AdapterState = defaultAdapter.State;
-
                 connectionManager = new ConnectionManager(devBluetooth, txtDebug);
-
                 string lastPage = Intent.GetStringExtra("LAST_PAGE");
                 if (lastPage == "REGISTER")
                 {
                     qrCodeInfo = Intent.GetStringExtra("QRCodeInformation");
                     Console.WriteLine(qrCodeInfo);
-                    SetInformationQrCode(qrCodeInfo);
-
                     connectionManager.SetConnectionWithInfo(qrCodeInfo);
                 }
                 else
@@ -135,28 +113,6 @@ namespace Key
             {
                 StartActivityForResult(new Intent(Android.Bluetooth.BluetoothAdapter.ActionRequestEnable), 0);
             }
-        }
-
-
-        private void SetInformationQrCode(string qrcode)
-        {
-            dynamic dicKeys = JsonConvert.DeserializeObject(qrcode);
-            dict[nonce] = dicKeys[nonce].Value;
-            dict[KeycPub] = dicKeys[KeycPub].Value;
-            dict[KeyDigest] = dicKeys[KeyDigest].Value;
-        }
-
-
-
-        private string SerializeJsonToString(string[] strings)
-        {
-            Dictionary<string, string> json = new Dictionary<string, string>();
-            foreach (string str in strings)
-            {
-                json.Add(str, dict[str]);
-            }
-
-            return JsonConvert.SerializeObject(json);
         }
     }
 }

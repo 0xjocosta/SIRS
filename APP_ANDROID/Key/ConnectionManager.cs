@@ -20,15 +20,9 @@ namespace Key
         BluetoothDevice bluetoothDevice;
         SecurityManager securityManager;
 
-        string nonce = "Nonce";
-        string KeycPub = "KcPub";
-        string KeyDigest = "Kd";
-        string KeysPub = "KsPub";
-
         public ConnectionManager(BluetoothDevice dev, TextView debugger=null)
         {
             bluetoothDevice = dev;
-            securityManager = new SecurityManager();
             //Debug
             txtDebug = debugger;
         }
@@ -93,7 +87,6 @@ namespace Key
         }
 
         /** Will cancel an in-progress connection, and close the socket */
-
         public void CancelConnection()
         {
             if (CONNECTED == false)
@@ -104,15 +97,18 @@ namespace Key
             {
                 mmSocket.Close();
             }
-            catch (IOException) { }
+            catch (Exception exc) {
+                Console.WriteLine(exc);
+
+            }
         }
 
         public void SetConnectionWithInfo(string qrCodeInfo)
         {
             Console.Write("WITH INFO FROM REGISTER");
             QrCodeObject qrCodeObj = JsonConvert.DeserializeObject<QrCodeObject>(qrCodeInfo);
-            securityManager.SetPcPublicKey(qrCodeObj.KcPub);
-            securityManager.SetDigestKey(qrCodeObj.Kd);
+
+            securityManager = new SecurityManager(qrCodeObj.KcPub, qrCodeObj.Kd);
             //dict[nonce] = dicKeys[nonce].Value;
 
             ConnectingToDevice();
@@ -124,6 +120,7 @@ namespace Key
         public void SetConnection()
         {
             Console.Write("WITHOUT INFO");
+            securityManager = new SecurityManager();
             ConnectingToDevice();
             ListeningFromSocketAsync();
         }
@@ -132,7 +129,7 @@ namespace Key
         {
             securityManager.Nonce = qrCodeObj.Nonce;
             JsonRemote message = new JsonRemote();
-            message.PublicKey = securityManager.RSAKeys.PubKey;
+            message.PublicKey = securityManager.GetPublicKey();
             string content = JsonConvert.SerializeObject(message);
             string strToSend = securityManager.EncryptAndEncodeMessage(content);
             WriteToSocket(strToSend);
@@ -168,11 +165,10 @@ namespace Key
                     txtDebug.Text += "Receiving: " + str + '\n';
 
                     ManageConnectedSocket(str);
-                    // Send the obtained bytes to the UI activity
-                    //mHandler.obtainMessage(MESSAGE_READ, bytes, -1, buffer).sendToTarget();
                 }
-                catch (IOException)
+                catch (Exception exc)
                 {
+                    Console.WriteLine(exc);
                     break;
                 }
             }
@@ -181,14 +177,10 @@ namespace Key
         private void ManageConnectedSocket(string buffer)
         {
             string decryptedBuffer = securityManager.DecodeAndDecryptMessage(buffer);
-            Console.WriteLine("JSON REMOTE RECEIVED");
-            Console.WriteLine(decryptedBuffer);
             JsonRemote message = JsonConvert.DeserializeObject<JsonRemote>(decryptedBuffer);
 
             //Send the decrypted symmetric Key
             string decryptedContent = securityManager.DecryptContentFromHost(message.ContentToDecipher);
-            Console.WriteLine("DECRYPTED CONTENT");
-            Console.WriteLine(decryptedContent);
             JsonRemote jsonMessage = new JsonRemote
             {
                 DecipheredContent = decryptedContent

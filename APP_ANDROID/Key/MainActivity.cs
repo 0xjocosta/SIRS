@@ -11,10 +11,9 @@ using System.Text;
 
 namespace Key
 {
-    [Activity(Label = "KeyAndroid", MainLauncher = true, Icon = "@mipmap/icon")]
+    [Activity(Label = "BlueKey", MainLauncher = true, Icon = "@mipmap/icon", Theme = "@style/Theme.AppCompat.Light.NoActionBar")]
     public class MainActivity : Activity
     {
-        int count = 1;
 
         protected override void OnCreate(Bundle savedInstanceState)
         {
@@ -23,14 +22,7 @@ namespace Key
             // Set our view from the "main" layout resource
             SetContentView(Resource.Layout.Main);
 
-            // Get our button from the layout resource,
-            // and attach an event to it
-            Button button = FindViewById<Button>(Resource.Id.myButton);
-
-            button.Click += delegate { button.Text = $"{count++} clicks!"; };
-
-            //#################################################################
-            // My Code
+            ImageView image1View = FindViewById<ImageView>(Resource.Id.imageblue);
 
             //Connection Button
             Button connectionButton = FindViewById<Button>(Resource.Id.connectHost);
@@ -53,4 +45,3 @@ namespace Key
         }
     }
 }
-
