@@ -49,8 +49,8 @@ namespace HostLocker {
             return JsonConvert.SerializeObject(
                 new QrCodeObject(
                     UserDevice.Nonce,
-                    UserDevice.RSAKeys.PubKey,
-                    UserDevice.DigestKey.SecretKey)
+                    UserDevice.rsaManager.PubKey,
+                    UserDevice.hmacManager.SecretKey)
                 );
         }
     }

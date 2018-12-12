@@ -17,6 +17,11 @@ namespace HostLocker {
             RefreshSecretKey();
         }
 
+        public HMACManager(byte[] key)
+        {
+            SecretKey = key;
+        }
+
         public string GetSecretKeyString()
         {
             return Encoding.ASCII.GetString(SecretKey);

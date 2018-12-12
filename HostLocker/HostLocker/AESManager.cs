@@ -24,7 +24,29 @@ namespace HostLocker
         public byte[] Key { get; set; }
         public byte[] InitVect { get; set; }
 
-        public void Update(byte[] key, byte[] iv)
+        private AesCryptoServiceProvider SetupProvider()
+        {
+            AesCryptoServiceProvider aesAlg = new AesCryptoServiceProvider();
+            aesAlg.BlockSize = _blockSize;
+            aesAlg.KeySize = _keySize;
+            aesAlg.Mode = _mode;
+            aesAlg.Padding = _padding;
+
+            return aesAlg;
+        }
+
+        public void InitKey()
+        {
+            using (AesCryptoServiceProvider aesAlg = new AesCryptoServiceProvider()) {
+                aesAlg.GenerateIV();
+                aesAlg.GenerateKey();
+
+                Key = aesAlg.Key;
+                InitVect = aesAlg.IV;
+            }
+        }
+
+        public void SetKey(byte[] key, byte[] iv)
         {
             Key = key;
             InitVect = iv;
@@ -35,7 +57,6 @@ namespace HostLocker
             return Encoding.ASCII.GetBytes(content);
         }
 
-
         //FIX: for CBC mode, the InitVect must never be reused for different messages under the same key,
         //     and must be unpredictable in advance by an attacker
         public void EncryptFile_Aes(string inputFile) {
@@ -45,14 +66,9 @@ namespace HostLocker
 
             // Create an AesCryptoServiceProvider object
             // with the specified key and InitVect.
-            using (AesCryptoServiceProvider aesAlg = SetupAesProvider()) {
-                aesAlg.GenerateIV();
-                aesAlg.GenerateKey();
-
-                Update(aesAlg.Key, aesAlg.IV);
-
+            using (AesCryptoServiceProvider aesAlg = SetupProvider()) {
                 // Create an encryptor to perform the stream transform.
-                ICryptoTransform encryptor = aesAlg.CreateEncryptor(aesAlg.Key, aesAlg.IV);
+                ICryptoTransform encryptor = aesAlg.CreateEncryptor(Key, InitVect);
 
                 // Create the streams used for encryption.
                 using (FileStream fsCrypt = new FileStream(inputFile + ".aes", FileMode.Create)){
@@ -84,17 +100,6 @@ namespace HostLocker
             }
         }
 
-        private static AesCryptoServiceProvider SetupAesProvider()
-        {
-            AesCryptoServiceProvider aes_provider = new AesCryptoServiceProvider();
-            aes_provider.BlockSize = _blockSize;
-            aes_provider.KeySize = _keySize;
-            aes_provider.Mode = _mode;
-            aes_provider.Padding = _padding;
-
-            return aes_provider;
-        }
-
         public void DecryptFile_Aes(string inputFile, string outputFile) {
             // Check arguments.
             if (inputFile == null || inputFile.Length <= 0)
@@ -106,12 +111,9 @@ namespace HostLocker
             // Create an AesCryptoServiceProvider object
             // with the specified key and InitVect.
 
-            using (AesCryptoServiceProvider aesAlg = SetupAesProvider()) {
-                aesAlg.Key = Key;
-                aesAlg.IV = InitVect;
-
+            using (AesCryptoServiceProvider aesAlg = SetupProvider()) {
                 // Create a decryptor to perform the stream transform.
-                ICryptoTransform decryptor = aesAlg.CreateDecryptor(aesAlg.Key, aesAlg.IV);
+                ICryptoTransform decryptor = aesAlg.CreateDecryptor(Key, InitVect);
 
                 // Create the streams used for decryption.
                 using (FileStream fsCrypt = new FileStream(inputFile, FileMode.Open)) {

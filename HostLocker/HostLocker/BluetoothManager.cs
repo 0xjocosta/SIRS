@@ -35,20 +35,21 @@ namespace HostLocker {
         RegisterWindow _window;
         List<Device> devicesWrapper = new List<Device>();
 
-        public BluetoothManager(RegisterWindow window) {
-            _window = window;
+        public BluetoothManager() {
             LOCAL_MAC = GetBTMacAddress();
             if (LOCAL_MAC != null) {
                 localEndpoint = new BluetoothEndPoint(LOCAL_MAC, BluetoothService.SerialPort);
                 localClient = new BluetoothClient(localEndpoint);
+                /* Scan for devices when instantiat bl manager
                 localComponent = new BluetoothComponent(localClient);
                 // async methods, can be done synchronously too
                 localComponent.DiscoverDevicesAsync(255, true, true, true, false, null);
-                localComponent.DiscoverDevicesProgress += new EventHandler<DiscoverDevicesEventArgs>(Scan);
-                localComponent.DiscoverDevicesComplete += new EventHandler<DiscoverDevicesEventArgs>(Scan_Complete);
+                localComponent.DiscoverDevicesProgress += Scan;
+                localComponent.DiscoverDevicesComplete += Scan_Complete;                
                 window.pb.Visibility = Visibility.Visible;
                 _window.listen_btn.Visibility = Visibility.Hidden;
                 _window.btn_find.Visibility = Visibility.Hidden;
+                */
             }
             else {
                 throw new Exception("No radio hardware or unsupported software stack");
@@ -91,10 +92,12 @@ namespace HostLocker {
 
         private void Scan_Complete(object sender, DiscoverDevicesEventArgs e) {
             Console.WriteLine("Devices discovered: " + e.Devices);
+            /*
             _window.pb.Visibility = Visibility.Hidden;
             _window.device_list.ItemsSource = devicesWrapper;
             _window.listen_btn.Visibility = Visibility.Visible;
             _window.btn_find.Visibility = Visibility.Visible;
+            */
         }
 
         public bool Pair(BluetoothAddress address, string DEVICE_PIN) {
@@ -107,9 +110,6 @@ namespace HostLocker {
                     if (bl != null) {
                         bl.Stop();
                         bl = null;
-                        _window.stop_listen_btn.Visibility = Visibility.Hidden;
-                        _window.listen_btn.Visibility = Visibility.Visible;
-                        _window.pb.Visibility = Visibility.Hidden;
                         serverStarted = false;
                     }
                 }
@@ -120,12 +120,13 @@ namespace HostLocker {
             try {
                 if (!serverStarted) {
                     bl = new BluetoothListener(LOCAL_MAC, BluetoothService.SerialPort);
-                    bl.Start(10);
+                    bl.Start(1);
                     serverStarted = true;
                     Task<BluetoothClientWrapper> task = Task<BluetoothClientWrapper>.Factory.FromAsync(bl.BeginAcceptBluetoothClient, AcceptConnection, bl);
                     BluetoothClientWrapper result = await task;
                     if (task.IsCompleted) {
                         BluetoothRemoteClient = result;
+                        //BluetoothRemoteClient.Listener = bl;
                     }
                 }
             }
@@ -140,24 +141,19 @@ namespace HostLocker {
         }
 
         public void VerifyClient() {
-            BluetoothDeviceInfo device;
-            foreach (BluetoothDeviceInfo dev in deviceList) {
-                if(dev.DeviceAddress.Sap == BluetoothRemoteClient.GetClient().RemoteEndPoint.Address.Sap) {
-                    device = dev;
-                    device.Refresh();
-                    BluetoothRemoteClient.BluetoothDeviceInfo = device;
-                    if (device.Authenticated && device.Remembered && device.Connected) {
-                            return;
-                    }
-                    throw new Exception("Not Authenticated!");
+                BluetoothRemoteClient.BluetoothDeviceInfo.Refresh();
+                if (BluetoothRemoteClient.BluetoothDeviceInfo.Authenticated && 
+                    BluetoothRemoteClient.BluetoothDeviceInfo.Remembered && 
+                    BluetoothRemoteClient.BluetoothDeviceInfo.Connected) {
+                        return;
                 }
-            }
-            throw new Exception("Not Device found for the connection request!");
+                throw new Exception("Not Authenticated!");
         }
         BluetoothClientWrapper AcceptConnection(IAsyncResult result) {
             if (result.IsCompleted) {
                 try {
                     BluetoothClient bc = ((BluetoothListener)result.AsyncState).EndAcceptBluetoothClient(result);
+                    if (!bc.Authenticate) Pair(bc.RemoteEndPoint.Address, (new Random()).Next(6,6).ToString());
                     return new BluetoothClientWrapper(bc);
                 } catch (Exception ex) {
                     return null;

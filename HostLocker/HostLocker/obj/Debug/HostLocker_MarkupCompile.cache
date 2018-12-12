@@ -4,16 +4,16 @@
 winexe
 C#
 .cs
-C:\Github\SIRS\HostLocker\HostLocker\obj\Debug\
+F:\SIRS\HostLocker\HostLocker\obj\Debug\
 HostLocker
 none
 false
 DEBUG;TRACE
-C:\Github\SIRS\HostLocker\HostLocker\App.xaml
+F:\SIRS\HostLocker\HostLocker\App.xaml
 41601615234
 
-20723715126
-22126635430
+21-489953680
+22507138321
 FilesWindow.xaml;Register.xaml;QRCode.xaml;WindowSwitcher.xaml;
 
 False

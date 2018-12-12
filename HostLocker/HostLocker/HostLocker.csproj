@@ -82,6 +82,7 @@
     <Compile Include="ISwitchable.cs" />
     <Compile Include="QrCodeManager.cs" />
     <Compile Include="RSAManager.cs" />
+    <Compile Include="RSAParametersSerializable.cs" />
     <Compile Include="Server.cs" />
     <Compile Include="QRCode.xaml.cs">
       <DependentUpon>QRCode.xaml</DependentUpon>

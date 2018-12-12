@@ -58,7 +58,10 @@ namespace HostLocker
         }
 
         public static string Encrypt(string plainTextData, RSAParameters key) {
-            Provider = new RSACryptoServiceProvider();
+            if (Provider == null)
+            {
+                Provider = new RSACryptoServiceProvider();
+            }
 
             //for encryption, always handle bytes...
             byte[] bytesPlainTextData = Encoding.ASCII.GetBytes(plainTextData);
@@ -78,7 +81,9 @@ namespace HostLocker
             byte[] bytesCypherText = Convert.FromBase64String(cypherText);
 
             //we want to decrypt, therefore we need a csp and load our private key
-            Provider = new RSACryptoServiceProvider();
+            if (Provider == null) {
+                Provider = new RSACryptoServiceProvider();
+            }
             Provider.ImportParameters(key);
 
             byte[] bytesPlainTextData = Provider.Decrypt(bytesCypherText, true);

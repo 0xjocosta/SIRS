@@ -7,7 +7,8 @@ using InTheHand.Net;
 using InTheHand.Net.Sockets;
 
 namespace HostLocker {
-    class Device {
+    [Serializable()]
+    public class Device {
 
         public string DeviceName { get; set; }
         public bool Authenticated { get; set; }
@@ -18,6 +19,7 @@ namespace HostLocker {
         public DateTime LastUsed { get; set; }
         public bool Remembered { get; set; }
         public BluetoothAddress DeviceAddress { get; set;}
+        public int Rssi { get; set; }
 
         public Device(BluetoothDeviceInfo device_info) {
             this.Authenticated = device_info.Authenticated;
@@ -29,6 +31,7 @@ namespace HostLocker {
             this.Sap = device_info.DeviceAddress.Sap;
             this.Remembered = device_info.Remembered;
             this.DeviceAddress = device_info.DeviceAddress;
+            this.Rssi = device_info.Rssi;
         }
 
         public override string ToString() {

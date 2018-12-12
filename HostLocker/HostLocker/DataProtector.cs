@@ -9,21 +9,20 @@ using InTheHand.Net.Sockets;
 
 
 namespace HostLocker {
-    //TODO: IMPLEMENT THIS, THE PURPOSE OF THIS CLASS IS TO SAVE SECURELY THE KEYS
     class DataProtector {
 
         public static void SaveData(UserData userData)
         {
-            FileStream fStream = new FileStream($"C:\\Users\\extre\\Desktop\\user_test_data.dat", FileMode.OpenOrCreate);
+            FileStream fStream = new FileStream($"C:\\Users\\extre\\Desktop\\HostLocker\\user_{userData.BlDeviceInfo.Sap}_data.dat", FileMode.OpenOrCreate);
             byte[] binaryObj = ObjectToByteArray(userData);
-            EncryptDataToStream(binaryObj, DataProtectionScope.LocalMachine, fStream);
+            EncryptDataToStream(binaryObj, DataProtectionScope.CurrentUser, fStream);
 
             fStream.Close();
         }
 
-        public static UserData LoadData(string sap) {
-            FileStream fStream = new FileStream($"C:\\Users\\extre\\Desktop\\user_{sap}_data.dat", FileMode.Open);
-            byte[] decryptData = DecryptDataFromStream(DataProtectionScope.LocalMachine, fStream);
+        public static UserData LoadData(uint sap) {
+            FileStream fStream = new FileStream($"C:\\Users\\extre\\Desktop\\HostLocker\\user_{sap}_data.dat", FileMode.Open);
+            byte[] decryptData = DecryptDataFromStream(DataProtectionScope.CurrentUser, fStream);
             fStream.Close();
 
             return (UserData)ByteArrayToObject(decryptData);
@@ -101,14 +100,18 @@ namespace HostLocker {
     [Serializable()]
     public class UserData
     {
+        public UserData(Device blDeviceInfo)
+        {
+            BlDeviceInfo = blDeviceInfo;
+        }
+
         public byte[] UserSecretKey { get; set; }
-        public string UserNonce { get; set; }
         public string EncryptedUserAesKey { get; set; }
         public byte[] UserAesInitVect { get; set; }
-        //public BluetoothDeviceInfo BlDeviceInfo { get; set; }
-        public RSAParameters UserPrivKey { get; set; }
-        public RSAParameters UserPubKey { get; set; }
-        public RSAParameters DevicePublicKey { get; set; }
-        public List<string> files { get; set; }
+        public Device BlDeviceInfo { get; set; }
+        public RSAParametersSerializable UserPrivKey { get; set; }
+        public RSAParametersSerializable UserPubKey { get; set; }
+        public RSAParametersSerializable DevicePublicKey { get; set; }
+        public List<string> Files { get; set; }
     }
 }

@@ -7,7 +7,8 @@
         mc:Ignorable="d"
         Title="WindowSwitcher" Icon="HostLockerIcon.png" Height="500" Width="800">
     <Grid>
-        <Button Content="Unlock Files" HorizontalAlignment="Left" Height="67" Margin="125,185,0,0" VerticalAlignment="Top" Width="184" Click="Button_Click_1"/>
-        <Button Content="Register Device" HorizontalAlignment="Left" Height="67" Margin="488,185,0,0" VerticalAlignment="Top" Width="184" Click="Button_Click"/>
+        <Button Content="Start" HorizontalAlignment="Left" Height="67" Margin="300,303,0,0" VerticalAlignment="Top" Width="184" Click="Button_Click" FontSize="20"/>
+        <TextBlock Text="Save your files in a secure and easy way just by using &#xA;your Smartphone as a security token." FontWeight="Medium" FontSize="26px" FontFamily="Verdana" TextAlignment="Center" HorizontalAlignment="Left" Margin="28,187,0,0" VerticalAlignment="Top" Width="722" Height="85"/>
+        <Image HorizontalAlignment="Left" Height="153" Margin="313,0,0,0" VerticalAlignment="Top" Width="154" Source="HostLockerIcon.png"/>
     </Grid>
 </Window>

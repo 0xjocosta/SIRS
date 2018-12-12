@@ -10,8 +10,7 @@
         <WrapPanel HorizontalAlignment="Center" DockPanel.Dock="Top" Margin="143,0,143,10" Width="494">
             <Button x:Name="add_content" Click="add_content_Click" Content="Add" Margin="10,5,10,5" Width="80" Height="40"/>
             <Button x:Name="remove_content" Content="Remove" Margin="45,5,0,5" Width="80" Height="40" Click="remove_content_Click"/>
-            <Button x:Name="save_content" Content="Save" Margin="45,5,5,5" Width="80" Height="40" Click="save_content_Click"/>
-            <Button x:Name="back_btn" Content="Back" Margin="45,5,5,5" Width="80" Height="40" Click="back_btn_Click"/>
+            <Button x:Name="back_btn" Content="Disconnect" Margin="45,5,5,5" Width="80" Height="40" Click="back_btn_Click"/>
         </WrapPanel>
         <ListBox Name="lbFiles" Margin="0,1.8,0,0.4" Width="494" SelectionMode="Multiple"/>
     </DockPanel>

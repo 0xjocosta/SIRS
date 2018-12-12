@@ -55,7 +55,6 @@ F:\SIRS\HostLocker\HostLocker\obj\Debug\HostLocker.csproj.CoreCompileInputs.cach
 F:\SIRS\HostLocker\HostLocker\obj\Debug\HostLocker.csproj.CopyComplete
 F:\SIRS\HostLocker\HostLocker\obj\Debug\HostLocker.exe
 F:\SIRS\HostLocker\HostLocker\obj\Debug\HostLocker.pdb
-F:\SIRS\HostLocker\HostLocker\obj\Debug\HostLocker.csprojAssemblyReference.cache
 F:\SIRS\HostLocker\HostLocker\bin\Debug\Newtonsoft.Json.dll
 F:\SIRS\HostLocker\HostLocker\bin\Debug\Newtonsoft.Json.pdb
 F:\SIRS\HostLocker\HostLocker\bin\Debug\Newtonsoft.Json.xml
@@ -74,3 +73,4 @@ C:\Github\SIRS\HostLocker\HostLocker\obj\Debug\Register.g.cs
 C:\Github\SIRS\HostLocker\HostLocker\obj\Debug\WindowSwitcher.g.cs
 C:\Github\SIRS\HostLocker\HostLocker\obj\Debug\FilesWindow.baml
 C:\Github\SIRS\HostLocker\HostLocker\obj\Debug\WindowSwitcher.baml
+F:\SIRS\HostLocker\HostLocker\obj\Debug\HostLocker.csprojAssemblyReference.cache

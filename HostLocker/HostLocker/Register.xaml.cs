@@ -3,9 +3,12 @@ using InTheHand.Net.Sockets;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 using Newtonsoft.Json;
 
 namespace HostLocker {
@@ -21,9 +24,9 @@ namespace HostLocker {
         public RegisterWindow() {
             InitializeComponent();
             bg = new BackgroundWorker();
-            bm = new BluetoothManager(this);
-            bg.DoWork += new DoWorkEventHandler(bg_DoWork);
-            bg.RunWorkerCompleted += new RunWorkerCompletedEventHandler(bg_RunWorkerCompleted);
+            bm = new BluetoothManager();
+            bg.DoWork += bg_DoWork;
+            bg.RunWorkerCompleted += bg_RunWorkerCompleted;
         }
 
         void bg_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e) {
@@ -75,54 +78,44 @@ namespace HostLocker {
             txt_remembered.Text = device.Remembered.ToString();
         }
 
-        private async void connect_to_device_Click(object sender, RoutedEventArgs e) {
+        private void pair_to_device_Click(object sender, RoutedEventArgs e) {
             if (_selectedDeviceAddress != null) {
                 bm.Pair(_selectedDeviceAddress, "1111");
             }
         }
 
-        private async void Button_Click(object sender, RoutedEventArgs e) {
+        private async void register_btn_Click(object sender, RoutedEventArgs e) {
             listen_btn.Visibility = Visibility.Hidden;
+            register_btn.Visibility = Visibility.Hidden;
             //SetVisibilityOfElements(new object[] {pb, stop_listen_btn, QrCodeImage}, Visibility.Visible);
             pb.Visibility = Visibility.Visible;
             stop_listen_btn.Visibility = Visibility.Visible;
             QrCodeImage.Visibility = Visibility.Visible;
+
             UserDevice = new UserDevice();
 
             QrCodeManager qrCodeManager = new QrCodeManager(UserDevice);
             QrCodeImage.Source = qrCodeManager.GenerateQrImage();
+            QrCodeImage.Visibility = Visibility.Visible;
+
             await bm.ReceiveConnection();
-            if (bm.BluetoothRemoteClient != null)
-            {
-                string messageReceived = bm.BluetoothRemoteClient.ReadFromBtDevice();
+
+            BluetoothClientWrapper bluetoothRemoteClient = bm.BluetoothRemoteClient;
+
+            if (bluetoothRemoteClient != null) {
                 bm.VerifyClient();
+                UserDevice.BluetoothConnection = bluetoothRemoteClient;
+                string messageReceived = bluetoothRemoteClient.ReadFromBtDevice();
                 JsonRemote messageDecrypted = UserDevice.DecryptedObjReceived(messageReceived);
                 UserDevice.SetDeviceKey(messageDecrypted.PublicKey);
-                UserDevice.InitAesKey();
-                UserDevice.AssociateDevice(bm.BluetoothRemoteClient.BluetoothDeviceInfo);
-                string request = UserDevice.PrepareDecryptRequest();
-
-                //UpdateInfo(new Device(UserDevice.BlDeviceInfo));
-                //success_txt.Visibility = Visibility.Visible;
-
-                bm.BluetoothRemoteClient.SendMessage(request);
-                string requestResponse = bm.BluetoothRemoteClient.ReadFromBtDevice();
-                //Handle the response
-                string decryptedKey = UserDevice.DecodeAndDecryptMessage(requestResponse);
-                JsonRemote decryptedObject = JsonConvert.DeserializeObject<JsonRemote>(decryptedKey);
-                AesManager aes = JsonConvert.DeserializeObject<AesManager>(decryptedObject.DecipheredContent);
-                
-
-
-                UserDevice.BluetoothConnection = bm.BluetoothRemoteClient;
                 Switcher.Switch(new FilesWindow(), UserDevice);
-
-                //bm.Dispose(true);
             }
+
             QrCodeImage.Source = null;
             //SetVisibilityOfElements(new object[] { pb, QrCodeImage }, Visibility.Hidden);
             pb.Visibility = Visibility.Hidden;
             QrCodeImage.Visibility = Visibility.Hidden;
+
             //Console.WriteLine(bc.ReadFromBtDevice());
             //bc.sendMessage("It wokrs||!!");
         }
@@ -144,6 +137,47 @@ namespace HostLocker {
             }
         }
 
+        private async void listen_btn_Click(object sender, RoutedEventArgs e) {
+            listen_btn.Visibility = Visibility.Hidden;
+            register_btn.Visibility = Visibility.Hidden;
+            //SetVisibilityOfElements(new object[] {pb, stop_listen_btn, QrCodeImage}, Visibility.Visible);
+            pb.Visibility = Visibility.Visible;
+            stop_listen_btn.Visibility = Visibility.Visible;
+
+            await bm.ReceiveConnection();
+
+            BluetoothClientWrapper bluetoothRemoteClient = bm.BluetoothRemoteClient;
+
+            if (bluetoothRemoteClient != null) {
+                bm.VerifyClient();
+                uint userSap = bluetoothRemoteClient.GetClient().RemoteEndPoint.Address.Sap;
+                // Get the encrypted key from memory if the user exists.
+
+                if (!File.Exists($"C:\\Users\\extre\\Desktop\\HostLocker\\user_{userSap}_data.dat"))
+                {
+                    throw new Exception("User does not exist.");
+                }
+
+                UserData user = DataProtector.LoadData(userSap);
+                UserDevice = new UserDevice(user);
+                UserDevice.BluetoothConnection = bluetoothRemoteClient;
+
+                string request = UserDevice.PrepareDecryptRequest(UserDevice.EncryptedSymmetricKey);
+                bluetoothRemoteClient.SendMessage(request);
+                string requestResponse = bluetoothRemoteClient.ReadFromBtDevice();
+                //Handle the response
+                string decryptedMessage = UserDevice.DecodeAndDecryptMessage(requestResponse);
+                JsonRemote decryptedObject = JsonConvert.DeserializeObject<JsonRemote>(decryptedMessage);
+                UserDevice.aesManager.SetKey(Encoding.ASCII.GetBytes(decryptedObject.DecipheredContent), user.UserAesInitVect);
+
+                Switcher.Switch(new FilesWindow(), UserDevice);
+            }
+
+            pb.Visibility = Visibility.Hidden;
+            listen_btn.Visibility = Visibility.Visible;
+            register_btn.Visibility = Visibility.Visible;
+            stop_listen_btn.Visibility = Visibility.Hidden;
+        }
 
         /*
          https://ourcodeworld.com/articles/read/471/how-to-encrypt-and-decrypt-files-using-the-aes-encryption-algorithm-in-c-sharp

@@ -10,9 +10,11 @@ namespace HostLocker {
     class BluetoothClientWrapper {
         private BluetoothClient _bluetoothClient;
         public BluetoothDeviceInfo BluetoothDeviceInfo { get; set; }
+        //public BluetoothListener Listener { get; set; }
 
         public BluetoothClientWrapper(BluetoothClient bc) {
             _bluetoothClient = bc;
+            BluetoothDeviceInfo = new BluetoothDeviceInfo(bc.RemoteEndPoint.Address);
         }
 
         public BluetoothClient GetClient() {

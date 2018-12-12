@@ -12,27 +12,31 @@ namespace HostLocker
 {
     class UserDevice
     {
-        public HMACManager DigestKey { get; set; }
+        public HMACManager hmacManager { get; set; }
         public string Nonce { get; set; }
-        public AesManager SymmetricKey { get; set; }
-        public BluetoothDeviceInfo BlDeviceInfo { get; set; }
-        public RSAManager RSAKeys { get; set; }
+        public AesManager aesManager { get; set; }
+        public RSAManager rsaManager { get; set; }
         public RSAParameters DevicePublicKey { get; set; }
         public BluetoothClientWrapper BluetoothConnection { get; set; }
-        public List<string> FilesList { get; set; }
+        public List<string> FilesList { get; set; } = new List<string>();
         public string EncryptedSymmetricKey { get; set; }
-
 
         public UserDevice()
         {
-            RSAKeys = new RSAManager();
-            DigestKey = new HMACManager();
+            rsaManager = new RSAManager();
+            hmacManager = new HMACManager();
             Nonce = Guid.NewGuid().ToString("N");
         }
 
-        public void AssociateDevice(BluetoothDeviceInfo device)
+        public UserDevice(UserData user)
         {
-            BlDeviceInfo = device;
+            rsaManager = new RSAManager(user.UserPubKey.RSAParameters, user.UserPrivKey.RSAParameters);
+            aesManager = new AesManager();
+            DevicePublicKey = user.DevicePublicKey.RSAParameters;
+            FilesList = user.Files;
+            hmacManager = new HMACManager(user.UserSecretKey);
+            Nonce = Guid.NewGuid().ToString("N");
+            EncryptedSymmetricKey = user.EncryptedUserAesKey;
         }
 
         public string GenerateNonce() {
@@ -40,10 +44,11 @@ namespace HostLocker
             return Nonce;
         }
 
-        public void InitAesKey()
+        public void InitAesManager()
         {
-            SymmetricKey = new AesManager();
-            EncryptedSymmetricKey = RSAManager.Encrypt(JsonConvert.SerializeObject(SymmetricKey), DevicePublicKey);
+            aesManager = new AesManager();
+            aesManager.InitKey();
+            EncryptedSymmetricKey = RSAManager.Encrypt(Encoding.ASCII.GetString(aesManager.Key), DevicePublicKey);
         }
 
         public string FreshMessage(string msg)
@@ -52,8 +57,8 @@ namespace HostLocker
         }
 
         public string JsonMessage(string msg) {
-            //string cipherText = RSAKeys.Encrypt(msg, DevicePublicKey); UNCOMMENT THIS TO USE  FOR CONFIDENTIALITY
-            return JsonConvert.SerializeObject(new JsonCryptoDigestMessage(msg, DigestKey.Encode(msg)));
+            //string cipherText = rsaManager.Encrypt(msg, DevicePublicKey); UNCOMMENT THIS TO USE  FOR CONFIDENTIALITY
+            return JsonConvert.SerializeObject(new JsonCryptoDigestMessage(msg, hmacManager.Encode(msg)));
         }
 
         public string EncryptAndEncodeMessage(string msg)
@@ -65,7 +70,7 @@ namespace HostLocker
 
         public string DecodeAndDecryptMessage(string msg)
         {
-            //string jsonString = RSAKeys.Decrypt(AuthenticateMessage(msg));
+            //string jsonString = rsaManager.Decrypt(AuthenticateMessage(msg));
             JsonFreshMessage jsonFreshMessage = JsonConvert.DeserializeObject<JsonFreshMessage>(AuthenticateMessage(msg));
 
             VerifyNonce(jsonFreshMessage.Nonce);
@@ -89,7 +94,7 @@ namespace HostLocker
         public string AuthenticateMessage(string message)
         {
             JsonCryptoDigestMessage jsonCryptoDigestMessage = JsonConvert.DeserializeObject<JsonCryptoDigestMessage>(message);
-            //if (!jsonCryptoDigestMessage.Digest.Equals(DigestKey.Encode(jsonCryptoDigestMessage.Cryptotext))) throw new Exception("Message was corrupted!\n");
+            //if (!jsonCryptoDigestMessage.Digest.Equals(hmacManager.Encode(jsonCryptoDigestMessage.Cryptotext))) throw new Exception("Message was corrupted!\n");
 
             return jsonCryptoDigestMessage.Cryptotext;
         }
@@ -100,14 +105,13 @@ namespace HostLocker
             return JsonConvert.DeserializeObject<JsonRemote>(decryptedMsg);
         }
 
-        public string PrepareDecryptRequest()
-        {
+        public string PrepareDecryptRequest(string encryptedSymmetricKey) {
             //Object to be send to the smartphone
             JsonRemote jsonRemote = new JsonRemote();
 
             //set info to be decipher in smartphone
-            jsonRemote.ContentToDecipher = EncryptedSymmetricKey;
-            
+            jsonRemote.ContentToDecipher = encryptedSymmetricKey;
+
             //encrypt and encode the serialize object
             return EncryptAndEncodeMessage(JsonConvert.SerializeObject(jsonRemote));
         }

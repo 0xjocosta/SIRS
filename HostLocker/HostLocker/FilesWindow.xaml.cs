@@ -8,18 +8,19 @@ using Microsoft.Win32;
 using Path = System.IO.Path;
 using System.Security.AccessControl;
 using System.Text;
+using System.Threading;
+using InTheHand.Net.Bluetooth;
 
 namespace HostLocker {
     /// <summary>
     /// Interaction logic for FilesWindow.xaml
     /// </summary>
     public partial class FilesWindow : UserControl, ISwitchable {
-        private AesManager aes;
         private UserDevice Device;
+        System.Threading.Timer connTimer;
 
         public FilesWindow() {
             InitializeComponent();
-            aes = new AesManager();
         }
 
         private void add_content_Click(object sender, RoutedEventArgs e) {
@@ -31,52 +32,89 @@ namespace HostLocker {
             if (openFileDialog.ShowDialog() == true)
             {
                 foreach (string filename in openFileDialog.FileNames)
+                {
                     lbFiles.Items.Add(Path.GetFullPath(filename));
+                    Device.FilesList.Remove(filename);
+                }
             }
+        }
+
+        private void Dispose() {
+            connTimer.Dispose();
+        }
+
+        private void StopTimer() {
+            connTimer.Change(Timeout.Infinite, Timeout.Infinite);
+        }
+
+        private void CheckConnection(object state)
+        {
+            Device.BluetoothConnection.BluetoothDeviceInfo.Refresh();
+            if (!Device.BluetoothConnection.BluetoothDeviceInfo.Connected)
+            {
+                Save();
+            }
+        }
+
+        private void Save() {
+            StopTimer();
+            foreach (var file in lbFiles.Items) {
+                Device.FilesList.Add(file.ToString());
+                Device.InitAesManager();
+                Device.aesManager.EncryptFile_Aes(file.ToString());
+            }
+
+            DataProtector.SaveData(CreateDataObject());
+            /*Dispose();
+            Switcher.Switch(new RegisterWindow());*/
         }
 
         public void UtilizeState(object state) {
             if (state != null)
             {
                 Device = (UserDevice) state;
+                connTimer = new Timer(CheckConnection, null, 0, 1000);
+                foreach (var file in Device.FilesList)
+                {
+                    lbFiles.Items.Add(file);
+                    Device.aesManager.DecryptFile_Aes(file + ".aes", file + ".dec");
+                }
             }
         }
 
         private void remove_content_Click(object sender, RoutedEventArgs e)
         {
             var selected = lbFiles.SelectedItems.Cast<Object>().ToArray();
-            foreach (var item in selected) lbFiles.Items.Remove(item);
-        }
-
-        private void save_content_Click(object sender, RoutedEventArgs e)
-        {
-            foreach (var file in lbFiles.Items)
+            foreach (var item in selected)
             {
-                Device.FilesList.Add(file.ToString());
-                aes.EncryptFile_Aes(file.ToString());
+                lbFiles.Items.Remove(item);
+                Device.FilesList.Remove(item.ToString());
             }
-
-            DataProtector.SaveData(CreateDataObject());
         }
 
         private void back_btn_Click(object sender, RoutedEventArgs e) {
+            StopTimer();
             foreach (var file in lbFiles.Items) {
-                //Device.FilesList.Remove(file.ToString());
-                aes.DecryptFile_Aes(file.ToString()+".aes", file.ToString() + ".dec");
+                Device.FilesList.Add(file.ToString());
+                Device.InitAesManager();
+                Device.aesManager.EncryptFile_Aes(file.ToString());
             }
+
+            DataProtector.SaveData(CreateDataObject());
+            Dispose();
+            Switcher.Switch(new RegisterWindow());
         }
 
         private UserData CreateDataObject()
         {
-            UserData ud = new UserData();
-            //ud.BlDeviceInfo = Device.BlDeviceInfo;
-            ud.DevicePublicKey = Device.DevicePublicKey;
-            //ud.EncryptedUserAesKey = RSAManager.Encrypt(Encoding.ASCII.GetString(Device.SymmetricKey.Key), Device.DevicePublicKey);
-            ud.UserAesInitVect = Device.SymmetricKey.InitVect;
-            ud.UserPrivKey = Device.RSAKeys.PrivKey;
-            ud.UserPubKey = Device.RSAKeys.PubKey;
-            ud.UserSecretKey = Device.DigestKey.SecretKey;
-            ud.files = Device.FilesList;
+            UserData ud = new UserData(new Device(Device.BluetoothConnection.BluetoothDeviceInfo));
+            ud.DevicePublicKey = new RSAParametersSerializable(Device.DevicePublicKey);
+            ud.EncryptedUserAesKey = Device.EncryptedSymmetricKey;
+            ud.UserAesInitVect = Device.aesManager.InitVect;
+            ud.UserPrivKey = new RSAParametersSerializable(Device.rsaManager.PrivKey);
+            ud.UserPubKey = new RSAParametersSerializable(Device.rsaManager.PubKey);
+            ud.UserSecretKey = Device.hmacManager.SecretKey;
+            ud.Files = Device.FilesList;
 
             return ud;
         }
