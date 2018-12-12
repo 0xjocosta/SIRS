@@ -58,21 +58,27 @@ namespace HostLocker {
 
         private void Save() {
             StopTimer();
+            Device.InitAesManager();
             foreach (var file in lbFiles.Items) {
                 Device.FilesList.Add(file.ToString());
-                Device.InitAesManager();
                 Device.aesManager.EncryptFile_Aes(file.ToString());
             }
 
             DataProtector.SaveData(CreateDataObject());
-            /*Dispose();
-            Switcher.Switch(new RegisterWindow());*/
+            Dispose();
+            Device.BluetoothConnection.GetClient().Client.Close();
+            Device.BluetoothConnection.GetClient().Dispose();
+
+            Application.Current.Dispatcher.Invoke((Action)delegate {
+                Switcher.Switch(new RegisterWindow());
+            });
         }
 
         public void UtilizeState(object state) {
             if (state != null)
             {
                 Device = (UserDevice) state;
+                UpdateInfo(new Device(Device.BluetoothConnection.BluetoothDeviceInfo));
                 connTimer = new Timer(CheckConnection, null, 0, 1000);
                 foreach (var file in Device.FilesList)
                 {
@@ -93,16 +99,15 @@ namespace HostLocker {
         }
 
         private void back_btn_Click(object sender, RoutedEventArgs e) {
-            StopTimer();
-            foreach (var file in lbFiles.Items) {
-                Device.FilesList.Add(file.ToString());
-                Device.InitAesManager();
-                Device.aesManager.EncryptFile_Aes(file.ToString());
-            }
+            Save();
+        }
 
-            DataProtector.SaveData(CreateDataObject());
-            Dispose();
-            Switcher.Switch(new RegisterWindow());
+        private void UpdateInfo(Device device) {
+            txt_authenticated.Text = device.Authenticated.ToString();
+            txt_connected.Text = device.Connected.ToString();
+            txt_devicename.Text = device.DeviceName;
+            txt_lastused.Text = device.LastUsed.ToString();
+            txt_remembered.Text = device.Remembered.ToString();
         }
 
         private UserData CreateDataObject()
@@ -115,7 +120,6 @@ namespace HostLocker {
             ud.UserPubKey = new RSAParametersSerializable(Device.rsaManager.PubKey);
             ud.UserSecretKey = Device.hmacManager.SecretKey;
             ud.Files = Device.FilesList;
-
             return ud;
         }
     }

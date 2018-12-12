@@ -49,18 +49,18 @@ namespace HostLocker {
             return JsonConvert.SerializeObject(
                 new QrCodeObject(
                     UserDevice.Nonce,
-                    UserDevice.rsaManager.PubKey,
+                    new RSAParametersSerializable(UserDevice.rsaManager.PubKey),
                     UserDevice.hmacManager.SecretKey)
                 );
         }
     }
 
     public class QrCodeObject {
-        public string Nonce;
-        public RSAParameters KcPub;
+        public long Nonce;
+        public RSAParametersSerializable KcPub;
         public byte[] Kd;
 
-        public QrCodeObject(string nonce, RSAParameters kcpub, byte[] kd) {
+        public QrCodeObject(long nonce, RSAParametersSerializable kcpub, byte[] kd) {
             Nonce = nonce;
             KcPub = kcpub;
             Kd = kd;

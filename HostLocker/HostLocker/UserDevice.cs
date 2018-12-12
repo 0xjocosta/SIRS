@@ -13,19 +13,20 @@ namespace HostLocker
     class UserDevice
     {
         public HMACManager hmacManager { get; set; }
-        public string Nonce { get; set; }
+        public long Nonce { get; set; }
         public AesManager aesManager { get; set; }
         public RSAManager rsaManager { get; set; }
         public RSAParameters DevicePublicKey { get; set; }
         public BluetoothClientWrapper BluetoothConnection { get; set; }
         public List<string> FilesList { get; set; } = new List<string>();
         public string EncryptedSymmetricKey { get; set; }
+        public AesManager ConnAesManager { get; set; } = new AesManager();
 
         public UserDevice()
         {
             rsaManager = new RSAManager();
             hmacManager = new HMACManager();
-            Nonce = Guid.NewGuid().ToString("N");
+            Nonce = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
         }
 
         public UserDevice(UserData user)
@@ -35,12 +36,12 @@ namespace HostLocker
             DevicePublicKey = user.DevicePublicKey.RSAParameters;
             FilesList = user.Files;
             hmacManager = new HMACManager(user.UserSecretKey);
-            Nonce = Guid.NewGuid().ToString("N");
+            GenerateNonce();
             EncryptedSymmetricKey = user.EncryptedUserAesKey;
         }
 
-        public string GenerateNonce() {
-            Nonce = Guid.NewGuid().ToString("N");
+        public long GenerateNonce() {
+            Nonce = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
             return Nonce;
         }
 
@@ -48,8 +49,9 @@ namespace HostLocker
         {
             aesManager = new AesManager();
             aesManager.InitKey();
-            EncryptedSymmetricKey = RSAManager.Encrypt(Encoding.ASCII.GetString(aesManager.Key), DevicePublicKey);
+            EncryptedSymmetricKey = rsaManager.Encrypt(JsonConvert.SerializeObject(aesManager.Key), DevicePublicKey);
         }
+
 
         public string FreshMessage(string msg)
         {
@@ -57,8 +59,22 @@ namespace HostLocker
         }
 
         public string JsonMessage(string msg) {
-            //string cipherText = rsaManager.Encrypt(msg, DevicePublicKey); UNCOMMENT THIS TO USE  FOR CONFIDENTIALITY
-            return JsonConvert.SerializeObject(new JsonCryptoDigestMessage(msg, hmacManager.Encode(msg)));
+            //Refresh every message the keys 
+            ConnAesManager.InitKey();
+
+            //Cipher content with the symmetric key
+            byte[] bytes = ConnAesManager.EncryptStringToBytes_Aes(msg);
+
+            //Cipher the symmetric key with pub key
+            KeyDecipher keyDecipher = new KeyDecipher(ConnAesManager.Key, ConnAesManager.InitVect);
+            string KeyDecipher = JsonConvert.SerializeObject(keyDecipher);
+            string cipheredKey = rsaManager.Encrypt(KeyDecipher, DevicePublicKey);
+
+            //The cipherText and cipherKey
+            Message message = new Message(bytes, cipheredKey);
+
+            //Digest the message
+            return JsonConvert.SerializeObject(new JsonCryptoDigestMessage(JsonConvert.SerializeObject(message), hmacManager.Encode(JsonConvert.SerializeObject(message))));
         }
 
         public string EncryptAndEncodeMessage(string msg)
@@ -71,32 +87,35 @@ namespace HostLocker
         public string DecodeAndDecryptMessage(string msg)
         {
             //string jsonString = rsaManager.Decrypt(AuthenticateMessage(msg));
-            JsonFreshMessage jsonFreshMessage = JsonConvert.DeserializeObject<JsonFreshMessage>(AuthenticateMessage(msg));
+            Message messageRecv = AuthenticateMessage(msg);
+
+            string decryptedMessage = rsaManager.Decrypt(messageRecv.KeyToDecipher);
+
+            KeyDecipher key = JsonConvert.DeserializeObject<KeyDecipher>(decryptedMessage);
+
+            ConnAesManager.SetKey(key.Key, key.IV);
+
+            string jsonString = ConnAesManager.DecryptStringFromBytes_Aes(messageRecv.Cryptotext);
+
+            JsonFreshMessage jsonFreshMessage = JsonConvert.DeserializeObject<JsonFreshMessage>(jsonString);
 
             VerifyNonce(jsonFreshMessage.Nonce);
 
             return jsonFreshMessage.Message;
         }
 
-
-        public void SetDeviceKey(RSAParameters content)
+        public void VerifyNonce(long nonce)
         {
-            //string key = DecodeAndDecryptMessage(content);
-            //DevicePublicKey = JsonConvert.DeserializeObject<RSAParameters>(content);
-            DevicePublicKey = content;
+            long now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+            if ( now -10 > nonce || nonce > now + 10 ) throw new Exception("Invalid nonce!\n");
         }
 
-        public void VerifyNonce(string nonce)
-        {
-            //if (!Nonce.Equals(nonce)) throw new Exception("Invalid nonce!\n");
-        }
-
-        public string AuthenticateMessage(string message)
+        public Message AuthenticateMessage(string message)
         {
             JsonCryptoDigestMessage jsonCryptoDigestMessage = JsonConvert.DeserializeObject<JsonCryptoDigestMessage>(message);
-            //if (!jsonCryptoDigestMessage.Digest.Equals(hmacManager.Encode(jsonCryptoDigestMessage.Cryptotext))) throw new Exception("Message was corrupted!\n");
+            if (!jsonCryptoDigestMessage.Digest.Equals(hmacManager.Encode(jsonCryptoDigestMessage.Message))) throw new Exception("Message was corrupted!\n");
 
-            return jsonCryptoDigestMessage.Cryptotext;
+            return JsonConvert.DeserializeObject<Message>(jsonCryptoDigestMessage.Message);
         }
 
         public JsonRemote DecryptedObjReceived(string content)
@@ -119,29 +138,50 @@ namespace HostLocker
 
     public class JsonRemote
     {
-        public RSAParameters PublicKey { get; set; }
+        public RSAParametersSerializable PublicKey { get; set; }
         public string ContentToDecipher { get; set; }
         public string DecipheredContent { get; set; }
 
         public JsonRemote() { }
     }
 
-    public class JsonFreshMessage{
-        public string Message { get; set; }
-        public string Nonce { get; set; }
+    public class KeyDecipher {
+        public byte[] Key { get; set; }
+        public byte[] IV { get; set; }
 
-        public JsonFreshMessage(string msg, string nonce){
+        public KeyDecipher(byte[] key, byte[] iv) {
+            Key = key;
+            IV = iv;
+        }
+    }
+
+    public class Message {
+        public byte[] Cryptotext { get; set; }
+        public string KeyToDecipher { get; set; }
+
+        public Message(byte[] cryptoText, string keyDecipher) {
+            Cryptotext = cryptoText;
+            KeyToDecipher = keyDecipher;
+        }
+    }
+
+    public class JsonFreshMessage {
+        public string Message { get; set; }
+        public long Nonce { get; set; }
+
+        public JsonFreshMessage(string msg, long nonce) {
             Message = msg;
             Nonce = nonce;
         }
     }
 
-    public class JsonCryptoDigestMessage {
-        public string Cryptotext { get; set; }
+    public class JsonCryptoDigestMessage
+    {
+        public string Message { get; set; }
         public string Digest { get; set; }
 
-        public JsonCryptoDigestMessage(string cipher, string digest) {
-            Cryptotext = cipher;
+        public JsonCryptoDigestMessage(string msg, string digest) {
+            Message = msg;
             Digest = digest;
         }
     }

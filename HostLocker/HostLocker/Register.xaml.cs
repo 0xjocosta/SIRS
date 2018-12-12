@@ -7,6 +7,7 @@ using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Linq;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
@@ -63,19 +64,10 @@ namespace HostLocker {
                 Device device = (Device)device_list.SelectedItem;
                 connect_to_device.Visibility = Visibility.Visible;
                 _selectedDeviceAddress = device.DeviceAddress;
-                UpdateInfo(device);
             } else {
                 connect_to_device.Visibility = Visibility.Hidden;
                 _selectedDeviceAddress = null;
             }
-        }
-
-        private void UpdateInfo(Device device) {
-            txt_authenticated.Text = device.Authenticated.ToString();
-            txt_connected.Text = device.Connected.ToString();
-            txt_devicename.Text = device.DeviceName;
-            txt_lastused.Text = device.LastUsed.ToString();
-            txt_remembered.Text = device.Remembered.ToString();
         }
 
         private void pair_to_device_Click(object sender, RoutedEventArgs e) {
@@ -107,7 +99,7 @@ namespace HostLocker {
                 UserDevice.BluetoothConnection = bluetoothRemoteClient;
                 string messageReceived = bluetoothRemoteClient.ReadFromBtDevice();
                 JsonRemote messageDecrypted = UserDevice.DecryptedObjReceived(messageReceived);
-                UserDevice.SetDeviceKey(messageDecrypted.PublicKey);
+                UserDevice.DevicePublicKey = messageDecrypted.PublicKey.RSAParameters;
                 Switcher.Switch(new FilesWindow(), UserDevice);
             }
 
@@ -115,9 +107,6 @@ namespace HostLocker {
             //SetVisibilityOfElements(new object[] { pb, QrCodeImage }, Visibility.Hidden);
             pb.Visibility = Visibility.Hidden;
             QrCodeImage.Visibility = Visibility.Hidden;
-
-            //Console.WriteLine(bc.ReadFromBtDevice());
-            //bc.sendMessage("It wokrs||!!");
         }
 
         private void Button_Click_1(object sender, RoutedEventArgs e) {
@@ -140,7 +129,6 @@ namespace HostLocker {
         private async void listen_btn_Click(object sender, RoutedEventArgs e) {
             listen_btn.Visibility = Visibility.Hidden;
             register_btn.Visibility = Visibility.Hidden;
-            //SetVisibilityOfElements(new object[] {pb, stop_listen_btn, QrCodeImage}, Visibility.Visible);
             pb.Visibility = Visibility.Visible;
             stop_listen_btn.Visibility = Visibility.Visible;
 
@@ -168,7 +156,8 @@ namespace HostLocker {
                 //Handle the response
                 string decryptedMessage = UserDevice.DecodeAndDecryptMessage(requestResponse);
                 JsonRemote decryptedObject = JsonConvert.DeserializeObject<JsonRemote>(decryptedMessage);
-                UserDevice.aesManager.SetKey(Encoding.ASCII.GetBytes(decryptedObject.DecipheredContent), user.UserAesInitVect);
+                UserDevice.aesManager.SetKey(JsonConvert.DeserializeObject<byte[]>(decryptedObject.DecipheredContent),
+                    user.UserAesInitVect);
 
                 Switcher.Switch(new FilesWindow(), UserDevice);
             }
@@ -177,6 +166,7 @@ namespace HostLocker {
             listen_btn.Visibility = Visibility.Visible;
             register_btn.Visibility = Visibility.Visible;
             stop_listen_btn.Visibility = Visibility.Hidden;
+            //bm.Dispose(true);
         }
 
         /*

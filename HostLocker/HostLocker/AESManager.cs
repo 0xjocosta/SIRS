@@ -24,7 +24,7 @@ namespace HostLocker
         public byte[] Key { get; set; }
         public byte[] InitVect { get; set; }
 
-        private AesCryptoServiceProvider SetupProvider()
+        private AesCryptoServiceProvider SetupAesProvider()
         {
             AesCryptoServiceProvider aesAlg = new AesCryptoServiceProvider();
             aesAlg.BlockSize = _blockSize;
@@ -66,7 +66,7 @@ namespace HostLocker
 
             // Create an AesCryptoServiceProvider object
             // with the specified key and InitVect.
-            using (AesCryptoServiceProvider aesAlg = SetupProvider()) {
+            using (AesCryptoServiceProvider aesAlg = SetupAesProvider()) {
                 // Create an encryptor to perform the stream transform.
                 ICryptoTransform encryptor = aesAlg.CreateEncryptor(Key, InitVect);
 
@@ -111,10 +111,10 @@ namespace HostLocker
             // Create an AesCryptoServiceProvider object
             // with the specified key and InitVect.
 
-            using (AesCryptoServiceProvider aesAlg = SetupProvider()) {
+            using (AesCryptoServiceProvider aesAlg = SetupAesProvider()) {
                 // Create a decryptor to perform the stream transform.
                 ICryptoTransform decryptor = aesAlg.CreateDecryptor(Key, InitVect);
-
+                Console.WriteLine($"Key:{Encoding.ASCII.GetString(Key)}, IV:{Encoding.ASCII.GetString(InitVect)}");
                 // Create the streams used for decryption.
                 using (FileStream fsCrypt = new FileStream(inputFile, FileMode.Open)) {
                     using (CryptoStream csDecrypt = new CryptoStream(fsCrypt, decryptor, CryptoStreamMode.Read)) {
@@ -143,6 +143,71 @@ namespace HostLocker
                     }
                 }
             }
+        }
+
+        public byte[] EncryptStringToBytes_Aes(string plainText) {
+            // Check arguments.
+            if (plainText == null || plainText.Length <= 0)
+                throw new ArgumentNullException("plainText");
+            if (Key == null || Key.Length <= 0)
+                throw new ArgumentNullException("Key");
+            if (InitVect == null || InitVect.Length <= 0)
+                throw new ArgumentNullException("IV");
+            byte[] encrypted;
+            // Create an AesCryptoServiceProvider object
+            // with the specified key and InitVect.
+            using (AesCryptoServiceProvider aesAlg = new AesCryptoServiceProvider()) {
+                aesAlg.Mode = CipherMode.CBC;
+                aesAlg.BlockSize = _blockSize;
+                aesAlg.KeySize = _keySize;
+                aesAlg.Padding = _padding;
+                // Create an encryptor to perform the stream transform.
+                ICryptoTransform encryptor = aesAlg.CreateEncryptor(Key, InitVect);
+                // Create the streams used for encryption.
+                using (MemoryStream msEncrypt = new MemoryStream()) {
+                    using (CryptoStream csEncrypt = new CryptoStream(msEncrypt, encryptor, CryptoStreamMode.Write)) {
+                        using (StreamWriter swEncrypt = new StreamWriter(csEncrypt)) {
+                            //Write all data to the stream.
+                            swEncrypt.Write(plainText);
+                        }
+                        encrypted = msEncrypt.ToArray();
+                    }
+                }
+            }
+
+            return encrypted;
+        }
+
+        public string DecryptStringFromBytes_Aes(byte[] cipherText) {
+            // Check arguments.
+            if (cipherText == null || cipherText.Length <= 0)
+                throw new ArgumentNullException("cipherText");
+            if (Key == null || Key.Length <= 0)
+                throw new ArgumentNullException("Key");
+            if (InitVect == null || InitVect.Length <= 0)
+                throw new ArgumentNullException("IV");
+            string plaintext;
+            // Create an AesCryptoServiceProvider object
+            // with the specified key and InitVect.
+            using (AesCryptoServiceProvider aesAlg = new AesCryptoServiceProvider()) {
+                aesAlg.Mode = CipherMode.CBC;
+                aesAlg.BlockSize = _blockSize;
+                aesAlg.KeySize = _keySize;
+                aesAlg.Padding = _padding;
+                // Create a decryptor to perform the stream transform.
+                ICryptoTransform decryptor = aesAlg.CreateDecryptor(Key, InitVect);
+                // Create the streams used for decryption.
+                using (MemoryStream msDecrypt = new MemoryStream(cipherText)) {
+                    using (CryptoStream csDecrypt = new CryptoStream(msDecrypt, decryptor, CryptoStreamMode.Read)) {
+                        using (StreamReader srDecrypt = new StreamReader(csDecrypt)) {
+                            // Read the decrypted bytes from the decrypting stream
+                            // and place them in a string.
+                            plaintext = srDecrypt.ReadToEnd();
+                        }
+                    }
+                }
+            }
+            return plaintext;
         }
     }
 }
