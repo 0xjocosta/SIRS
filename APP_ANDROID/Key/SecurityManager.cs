@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Security.Cryptography;
+using System.Text;
 using Newtonsoft.Json;
 
 namespace Key
@@ -41,10 +42,10 @@ namespace Key
         public string JsonMessage(string msg) {
             RSAManager RSAKeys = new RSAManager(Helper.GetPcPublicKey());
             AesManager aesManager = new AesManager();
-
+            aesManager.InitKey();
             //Cipher content with the symmetric key
             byte[] bytes = aesManager.EncryptStringToBytes_Aes(msg);
-            string cipherText = JsonConvert.SerializeObject(bytes);
+            //string cipherText = JsonConvert.SerializeObject(bytes);
 
             //Cipher the symmetric key with pub key
             KeyDecipher keyDecipher = new KeyDecipher(aesManager.Key, aesManager.InitVect);
@@ -52,7 +53,7 @@ namespace Key
             string cipheredKey = RSAKeys.Encrypt(KeyDecipher);
 
             //The cipherText and cipherKey
-            Message message = new Message(cipherText, cipheredKey);
+            Message message = new Message(bytes, cipheredKey);
             string Message = JsonConvert.SerializeObject(message);
 
             //Digest the message
@@ -79,10 +80,10 @@ namespace Key
 
             //Decipher content
             AesManager aesManager = new AesManager();
-            aesManager.Update(keyDecipher.Key, keyDecipher.IV);
+            aesManager.SetKey(keyDecipher.Key, keyDecipher.IV);
 
-            byte[] content = JsonConvert.DeserializeObject<byte[]>(message.Cryptotext);
-            string Content = aesManager.DecryptStringFromBytes_Aes(content);
+            Console.WriteLine(Encoding.ASCII.GetString(message.Cryptotext));
+            string Content = aesManager.DecryptStringFromBytes_Aes(message.Cryptotext);
 
             JsonFreshMessage jsonFreshMessage = JsonConvert.DeserializeObject<JsonFreshMessage>(Content);
 
@@ -136,10 +137,10 @@ namespace Key
 
     public class Message
     {
-        public string Cryptotext { get; set; }
+        public byte[] Cryptotext { get; set; }
         public string KeyToDecipher { get; set; }
 
-        public Message(string cryptoText, string keyDecipher)
+        public Message(byte[] cryptoText, string keyDecipher)
         {
             Cryptotext = cryptoText;
             KeyToDecipher = keyDecipher;

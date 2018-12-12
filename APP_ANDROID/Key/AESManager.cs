@@ -18,13 +18,35 @@ namespace Key
 
         private static int _blockSize = 128;
         private static int _keySize = 256;
-        private static CipherMode _mode = CipherMode.CFB;
+        private static CipherMode _mode = CipherMode.CBC;
         private static PaddingMode _padding = PaddingMode.PKCS7;
 
         public byte[] Key { get; set; }
         public byte[] InitVect { get; set; }
 
-        public void Update(byte[] key, byte[] iv)
+        private AesCryptoServiceProvider SetupProvider()
+        {
+            AesCryptoServiceProvider aesAlg = new AesCryptoServiceProvider();
+            aesAlg.BlockSize = _blockSize;
+            aesAlg.KeySize = _keySize;
+            aesAlg.Mode = _mode;
+            aesAlg.Padding = _padding;
+
+            return aesAlg;
+        }
+
+        public void InitKey()
+        {
+            using (AesCryptoServiceProvider aesAlg = new AesCryptoServiceProvider()) {
+                aesAlg.GenerateIV();
+                aesAlg.GenerateKey();
+
+                Key = aesAlg.Key;
+                InitVect = aesAlg.IV;
+            }
+        }
+
+        public void SetKey(byte[] key, byte[] iv)
         {
             Key = key;
             InitVect = iv;
@@ -35,26 +57,22 @@ namespace Key
             return Encoding.ASCII.GetBytes(content);
         }
 
-
         public byte[] EncryptStringToBytes_Aes(string plainText)
         {
             // Check arguments.
-            /*if (plainText == null || plainText.Length <= 0)
+            if (plainText == null || plainText.Length <= 0)
                 throw new ArgumentNullException("plainText");
             if (Key == null || Key.Length <= 0)
                 throw new ArgumentNullException("Key");
             if (InitVect == null || InitVect.Length <= 0)
-                throw new ArgumentNullException("IV");*/
+                throw new ArgumentNullException("IV");
             byte[] encrypted;
             // Create an AesCryptoServiceProvider object
             // with the specified key and InitVect.
-            using (AesCryptoServiceProvider aesAlg = SetupAesProvider())
+            using (AesCryptoServiceProvider aesAlg = SetupProvider())
             {
-                aesAlg.GenerateIV();
-                aesAlg.GenerateKey();
-                Update(aesAlg.Key, aesAlg.IV);
                 // Create an encryptor to perform the stream transform.
-                ICryptoTransform encryptor = aesAlg.CreateEncryptor(aesAlg.Key, aesAlg.IV);
+                ICryptoTransform encryptor = aesAlg.CreateEncryptor(Key, InitVect);
                 // Create the streams used for encryption.
                 using (MemoryStream msEncrypt = new MemoryStream())
                 {
@@ -73,28 +91,22 @@ namespace Key
             return encrypted;
         }
 
-        private static AesCryptoServiceProvider SetupAesProvider()
-        {
-            AesCryptoServiceProvider aes_provider = new AesCryptoServiceProvider();
-            aes_provider.BlockSize = _blockSize;
-            aes_provider.KeySize = _keySize;
-            aes_provider.Mode = _mode;
-            aes_provider.Padding = _padding;
-
-            return aes_provider;
-        }
-
         public string DecryptStringFromBytes_Aes(byte[] cipherText)
         {
+            // Check arguments.
+            if (cipherText == null || cipherText.Length <= 0)
+                throw new ArgumentNullException("cipherText");
+            if (Key == null || Key.Length <= 0)
+                throw new ArgumentNullException("Key");
+            if (InitVect == null || InitVect.Length <= 0)
+                throw new ArgumentNullException("IV");
             string plaintext;
             // Create an AesCryptoServiceProvider object
             // with the specified key and InitVect.
-            using (AesCryptoServiceProvider aesAlg = SetupAesProvider())
+            using (AesCryptoServiceProvider aesAlg = SetupProvider())
             {
-                aesAlg.Key = Key;
-                aesAlg.IV = InitVect;
                 // Create a decryptor to perform the stream transform.
-                ICryptoTransform decryptor = aesAlg.CreateDecryptor(aesAlg.Key, aesAlg.IV);
+                ICryptoTransform decryptor = aesAlg.CreateDecryptor(Key, InitVect);
                 // Create the streams used for decryption.
                 using (MemoryStream msDecrypt = new MemoryStream(cipherText))
                 {
@@ -111,6 +123,5 @@ namespace Key
             }
             return plaintext;
         }
-
     }
 }

@@ -42,6 +42,13 @@ namespace Key
                 var intent = new Intent(this, typeof(RegisterActivity));
                 StartActivity(intent);
             };
+
+            /*AesManager aes = new AesManager();
+            string txt = "hello world";
+            aes.InitKey();
+            byte[] encr = aes.EncryptStringToBytes_Aes(txt);
+            string a = aes.DecryptStringFromBytes_Aes(encr);
+            Console.WriteLine(a);*/
         }
     }
 }

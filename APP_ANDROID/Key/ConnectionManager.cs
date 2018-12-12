@@ -151,28 +151,41 @@ namespace Key
             catch (IOException) { throw; }
         }
 
-        private async void ListeningFromSocketAsync()
+        private void ListeningFromSocketAsync()
         {
-            byte[] buffer = new byte[4096];  // buffer store for the stream
+            byte[] readBuffer = new byte[4096];  // buffer store for the stream
             //int bytes; // bytes returned from read()
 
             // Keep listening to the InputStream until an exception occurs
-            while (true)
+            string str = "";
+            int totalBytesRead = 0;
+            try
             {
-                try
+                int bytesRead;
+                // Read from the InputStream
+                for(int i=0; i < 2; i++)
                 {
-                    // Read from the InputStream
-                    await inputStream.ReadAsync(buffer, 0, 4096);
-                    string str = Encoding.ASCII.GetString(buffer);
-                    txtDebug.Text += "Receiving: " + str + '\n';
+                    if(((bytesRead = inputStream.Read(readBuffer, totalBytesRead, readBuffer.Length - totalBytesRead)) > 0))
+                    {
+                        totalBytesRead += bytesRead;
+                        if(totalBytesRead > 1000)
+                        {
+                            byte[] buffer = new byte[totalBytesRead];
+                            Buffer.BlockCopy(readBuffer, 0, buffer, 0, totalBytesRead);
 
-                    ManageConnectedSocket(str);
-                }
-                catch (Exception)
-                {
-                    throw;
+                            str = Encoding.ASCII.GetString(buffer);
+                            txtDebug.Text += "Receiving: " + str + '\n';
+                            ManageConnectedSocket(str);
+                            break;
+                        }
+                    }
                 }
             }
+            catch (Exception inva)
+            {
+                Console.WriteLine(inva);
+            }
+
         }
 
         private void ManageConnectedSocket(string buffer)
