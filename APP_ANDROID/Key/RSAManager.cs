@@ -80,6 +80,7 @@ namespace Key
             //we might want a string representation of our cypher text... base64 will do
             return Convert.ToBase64String(bytesCypherText);
         }
+
         public string Encrypt(string cypherText)
         {
             return Encrypt(cypherText, PubKey);

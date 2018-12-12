@@ -64,12 +64,12 @@ namespace Key
             return rsaPub.RSAParameters;
         }
 
-        public RSAParameters GetPublicKey()
+        public RSAParametersSerializable GetPublicKey()
         {
             ISharedPreferences prefs = PreferenceManager.GetDefaultSharedPreferences(mContext);
             string pub = prefs.GetString(KeysPub, "");
             RSAParametersSerializable rsaPub = JsonConvert.DeserializeObject<RSAParametersSerializable>(pub);
-            return rsaPub.RSAParameters;
+            return rsaPub;
         }
 
         public RSAParameters GetPrivateKey()

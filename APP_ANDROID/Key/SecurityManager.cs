@@ -6,23 +6,15 @@ namespace Key
 {
     class SecurityManager
     {
-        //public HMACManager DigestKey { get; set; }
-        public string Nonce { get; set; }
-        public RSAManager RSAManager { get; set; }
-        //public RSAParameters PcPublicKey { get; set;}
-
         private SecurityManagerHelper Helper;
 
         public SecurityManager(RSAParameters pcPubKey, byte[] Kdigest)
         {
             Helper = new SecurityManagerHelper();
             RSAManager RSAKeys = new RSAManager();
-            RSAManager = RSAKeys;
             Helper.SavePairKey(RSAKeys.PubKey, RSAKeys.PrivKey);
             Helper.SavePcPublicKey(pcPubKey);
             Helper.SaveDigestKey(Kdigest);
-
-            Nonce = Guid.NewGuid().ToString("N");
         }
 
         public SecurityManager()
@@ -30,27 +22,42 @@ namespace Key
             Helper = new SecurityManagerHelper();
         }
 
-        public RSAParameters GetPublicKey()
+        public RSAParametersSerializable GetPublicKey()
         {
             return Helper.GetPublicKey();
         }
 
-        private string GenerateNonce() {
-            Nonce = Guid.NewGuid().ToString("N");
-            return Nonce;
+        public long GenerateNonce()
+        {
+            long nonce = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+            return nonce;
         }
 
         public string FreshMessage(string msg)
         {
-            return JsonConvert.SerializeObject(new JsonFreshMessage(msg, Nonce/*GenerateNonce()*/));
+            return JsonConvert.SerializeObject(new JsonFreshMessage(msg, GenerateNonce()));
         }
 
         public string JsonMessage(string msg) {
-            string cipherText = msg;
             RSAManager RSAKeys = new RSAManager(Helper.GetPcPublicKey());
-            //string cipherText = RSAKeys.Encrypt(msg);
+            AesManager aesManager = new AesManager();
+
+            //Cipher content with the symmetric key
+            byte[] bytes = aesManager.EncryptStringToBytes_Aes(msg);
+            string cipherText = JsonConvert.SerializeObject(bytes);
+
+            //Cipher the symmetric key with pub key
+            KeyDecipher keyDecipher = new KeyDecipher(aesManager.Key, aesManager.InitVect);
+            string KeyDecipher = JsonConvert.SerializeObject(keyDecipher);
+            string cipheredKey = RSAKeys.Encrypt(KeyDecipher);
+
+            //The cipherText and cipherKey
+            Message message = new Message(cipherText, cipheredKey);
+            string Message = JsonConvert.SerializeObject(message);
+
+            //Digest the message
             HMACManager DigestKey = new HMACManager(Helper.GetDigestKey());
-            return JsonConvert.SerializeObject(new JsonCryptoDigestMessage(cipherText, DigestKey.Encode(cipherText)));
+            return JsonConvert.SerializeObject(new JsonCryptoDigestMessage(Message, DigestKey.Encode(Message)));
         }
 
         public string EncryptAndEncodeMessage(string msg)
@@ -62,62 +69,99 @@ namespace Key
 
         public string DecodeAndDecryptMessage(string msg)
         {
-            string jsonString = msg;
-            RSAManager RSAKeys = new RSAManager(Helper.GetPublicKey(), Helper.GetPrivateKey());
-            //string jsonString = RSAKeys.Decrypt(AuthenticateMessage(msg));
-            JsonFreshMessage jsonFreshMessage = JsonConvert.DeserializeObject<JsonFreshMessage>(AuthenticateMessage(jsonString));
 
-            //VerifyNonce(jsonFreshMessage.Nonce);
+            RSAManager RSAKeys = new RSAManager(Helper.GetPublicKey().RSAParameters, Helper.GetPrivateKey());
+            Message message = AuthenticateMessage(msg);
+
+            //Decipher symm key to decipher the content
+            string keyToDecipher = RSAKeys.Decrypt(message.KeyToDecipher);
+            KeyDecipher keyDecipher = JsonConvert.DeserializeObject<KeyDecipher>(keyToDecipher);
+
+            //Decipher content
+            AesManager aesManager = new AesManager();
+            aesManager.Update(keyDecipher.Key, keyDecipher.IV);
+
+            byte[] content = JsonConvert.DeserializeObject<byte[]>(message.Cryptotext);
+            string Content = aesManager.DecryptStringFromBytes_Aes(content);
+
+            JsonFreshMessage jsonFreshMessage = JsonConvert.DeserializeObject<JsonFreshMessage>(Content);
+
+            VerifyNonce(jsonFreshMessage.Nonce);
 
             return jsonFreshMessage.Message;
         }
 
-        public void VerifyNonce(string nonce)
+        public void VerifyNonce(long nonce)
         {
-            if (!Nonce.Equals(nonce)) throw new Exception("Invalid nonce!\n");
+            long now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+            if (now - 10 > nonce || nonce > now + 10) throw new Exception("Invalid nonce!\n");
         }
 
-        public string AuthenticateMessage(string message)
+        public Message AuthenticateMessage(string message)
         {
             HMACManager DigestKey = new HMACManager(Helper.GetDigestKey());
             JsonCryptoDigestMessage jsonCryptoDigestMessage = JsonConvert.DeserializeObject<JsonCryptoDigestMessage>(message);
-            if (!jsonCryptoDigestMessage.Digest.Equals(DigestKey.Encode(jsonCryptoDigestMessage.Cryptotext))) throw new Exception("Message was corrupted!\n");
+            if (!jsonCryptoDigestMessage.Digest.Equals(DigestKey.Encode(jsonCryptoDigestMessage.Message))) throw new Exception("Message was corrupted!\n");
 
-            return jsonCryptoDigestMessage.Cryptotext;
+            return JsonConvert.DeserializeObject<Message>(jsonCryptoDigestMessage.Message);
         }
 
         public string DecryptContentFromHost(string content)
         {
-            RSAManager RSAKeys = new RSAManager(Helper.GetPublicKey(), Helper.GetPrivateKey());
+            RSAManager RSAKeys = new RSAManager(Helper.GetPublicKey().RSAParameters, Helper.GetPrivateKey());
             return RSAKeys.Decrypt(content);
         }
     }
 
     public class JsonRemote
     {
-        public RSAParameters PublicKey { get; set; }
+        public RSAParametersSerializable PublicKey { get; set; }
         public string ContentToDecipher { get; set; }
         public string DecipheredContent { get; set; }
         
         public JsonRemote() { }
     }
 
+    public class KeyDecipher
+    {
+        public byte[] Key { get; set; }
+        public byte[] IV { get; set; }
+
+        public KeyDecipher(byte[] key, byte[] iv)
+        {
+            Key = key;
+            IV = iv;
+        }
+    }
+
+    public class Message
+    {
+        public string Cryptotext { get; set; }
+        public string KeyToDecipher { get; set; }
+
+        public Message(string cryptoText, string keyDecipher)
+        {
+            Cryptotext = cryptoText;
+            KeyToDecipher = keyDecipher;
+        }
+    }
+
     public class JsonFreshMessage{
         public string Message { get; set; }
-        public string Nonce { get; set; }
+        public long Nonce { get; set; }
 
-        public JsonFreshMessage(string msg, string nonce){
+        public JsonFreshMessage(string msg, long nonce){
             Message = msg;
             Nonce = nonce;
         }
     }
 
     public class JsonCryptoDigestMessage {
-        public string Cryptotext { get; set; }
+        public string Message { get; set; }
         public string Digest { get; set; }
 
-        public JsonCryptoDigestMessage(string cipher, string digest) {
-            Cryptotext = cipher;
+        public JsonCryptoDigestMessage(string message, string digest) {
+            Message = message;
             Digest = digest;
         }
     }
