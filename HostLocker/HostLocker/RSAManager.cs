@@ -57,7 +57,7 @@ namespace HostLocker
             return (RSAParameters)xs.Deserialize(sr);
         }
 
-        public static string Encrypt(string plainTextData, RSAParameters key) {
+        public string Encrypt(string plainTextData, RSAParameters key) {
             if (Provider == null)
             {
                 Provider = new RSACryptoServiceProvider();

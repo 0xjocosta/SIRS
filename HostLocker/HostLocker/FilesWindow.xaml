@@ -5,13 +5,22 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:HostLocker"
         mc:Ignorable="d"
-        Height="450" Width="800" Background="White">
-    <DockPanel Margin="10,0,10,9.6" Height="430" VerticalAlignment="Bottom">
-        <WrapPanel HorizontalAlignment="Center" DockPanel.Dock="Top" Margin="143,0,143,10" Width="494">
-            <Button x:Name="add_content" Click="add_content_Click" Content="Add" Margin="10,5,10,5" Width="80" Height="40"/>
-            <Button x:Name="remove_content" Content="Remove" Margin="45,5,0,5" Width="80" Height="40" Click="remove_content_Click"/>
-            <Button x:Name="back_btn" Content="Disconnect" Margin="45,5,5,5" Width="80" Height="40" Click="back_btn_Click"/>
-        </WrapPanel>
-        <ListBox Name="lbFiles" Margin="0,1.8,0,0.4" Width="494" SelectionMode="Multiple"/>
-    </DockPanel>
+        Height="450" Width="800" Background="#626276">
+    <Grid Margin="0,0,-6.4,3.4" Name="main_grid" Visibility="Visible" Background="#626276">
+        <Button x:Name="add_content" Click="add_content_Click" Content="Add" Margin="247,79,479.4,336.2" Width="80"/>
+        <Button x:Name="remove_content" Content="Remove" Margin="332,79,394.4,336.2" Width="80" Click="remove_content_Click"/>
+        <Button x:Name="back_btn" Content="Disconnect" Margin="650,79,76.4,336.2" Width="80" Click="back_btn_Click"/>
+        <ListBox Name="lbFiles" Margin="76,117,394.4,111.2" SelectionMode="Multiple"/>
+        <Label Height="28" Margin="485,138,227.4,0" Name="label1" VerticalAlignment="Top">Device Name:</Label>
+        <Label Height="28" HorizontalAlignment="Right" Margin="0,178,232.4,0" Name="label2" VerticalAlignment="Top" Width="73">Connected:</Label>
+        <Label Height="28" Margin="485,211,227.4,0" Name="label3" VerticalAlignment="Top">Authenticated:</Label>
+        <Label HorizontalAlignment="Right" Margin="0,248,232.4,0" Name="label4" Width="88" Height="25" VerticalAlignment="Top">Remembered:</Label>
+        <Label HorizontalAlignment="Right" Margin="0,287,232.4,0" Name="label8" Width="64" Height="25" VerticalAlignment="Top">LastUsed:</Label>
+        <TextBox Background="#A6A69F" Height="23" HorizontalAlignment="Right" Margin="0,138,76.4,0" Name="txt_devicename" VerticalAlignment="Top" Width="150" IsReadOnly="True" />
+        <TextBox Background="#A6A69F" Height="23" HorizontalAlignment="Right" Margin="0,179,76.4,0" Name="txt_connected" VerticalAlignment="Top" Width="150" IsReadOnly="True" />
+        <TextBox Background="#A6A69F" HorizontalAlignment="Right" Margin="0,248,76.4,0" Name="txt_remembered" Width="150" Height="25" VerticalAlignment="Top" IsReadOnly="True" />
+        <TextBox Background="#A6A69F" HorizontalAlignment="Right" Margin="0,213,76.4,0" Name="txt_authenticated" Width="150" Height="21" VerticalAlignment="Top" IsReadOnly="True"/>
+        <TextBox Background="#A6A69F" HorizontalAlignment="Right" Margin="0,287,76.4,0" Name="txt_lastused" Width="150" Height="23" VerticalAlignment="Top" IsReadOnly="True" />
+        <Label FontSize="16px" Content="Files to protect:" HorizontalAlignment="Left" Margin="76,79,0,0" VerticalAlignment="Top" Width="151" Height="33"/>
+    </Grid>
 </UserControl>
