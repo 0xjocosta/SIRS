@@ -77,41 +77,49 @@ namespace Key
 
         private void Btnstart_Click(object sender, EventArgs e)
         {
-            BluetoothAdapter defaultAdapter = BluetoothAdapter.DefaultAdapter;
-            BluetoothDevice devBluetooth = null;
-            string AdapterAddress, AdapterName, AdapterBoundDevices = String.Empty;
-            State AdapterState;
-            if (defaultAdapter.IsEnabled)
+            try
             {
-                AdapterAddress = defaultAdapter.Address;
-                AdapterName = defaultAdapter.Name;
-                var bd = defaultAdapter.BondedDevices;
-                foreach (var dev in bd)
+                BluetoothAdapter defaultAdapter = BluetoothAdapter.DefaultAdapter;
+                BluetoothDevice devBluetooth = null;
+                string AdapterAddress, AdapterName, AdapterBoundDevices = String.Empty;
+                State AdapterState;
+                if (defaultAdapter.IsEnabled)
                 {
-                    if (!String.IsNullOrEmpty(AdapterBoundDevices))
+                    AdapterAddress = defaultAdapter.Address;
+                    AdapterName = defaultAdapter.Name;
+                    var bd = defaultAdapter.BondedDevices;
+                    foreach (var dev in bd)
                     {
-                        AdapterBoundDevices += ",";
+                        if (!String.IsNullOrEmpty(AdapterBoundDevices))
+                        {
+                            AdapterBoundDevices += ",";
+                        }
+                        AdapterBoundDevices += dev.Name;
+                        devBluetooth = dev;
                     }
-                    AdapterBoundDevices += dev.Name;
-                    devBluetooth = dev;
-                }
-                AdapterState = defaultAdapter.State;
-                connectionManager = new ConnectionManager(devBluetooth, txtDebug);
-                string lastPage = Intent.GetStringExtra("LAST_PAGE");
-                if (lastPage == "REGISTER")
-                {
-                    qrCodeInfo = Intent.GetStringExtra("QRCodeInformation");
-                    Console.WriteLine(qrCodeInfo);
-                    connectionManager.SetConnectionWithInfo(qrCodeInfo);
+                    AdapterState = defaultAdapter.State;
+                    connectionManager = new ConnectionManager(devBluetooth, txtDebug);
+                    string lastPage = Intent.GetStringExtra("LAST_PAGE");
+                    if (lastPage == "REGISTER")
+                    {
+                        qrCodeInfo = Intent.GetStringExtra("QRCodeInformation");
+                        Console.WriteLine(qrCodeInfo);
+                        connectionManager.SetConnectionWithInfo(qrCodeInfo);
+                    }
+                    else
+                    {
+                        connectionManager.SetConnection();
+                    }
                 }
                 else
                 {
-                    connectionManager.SetConnection();
+                    StartActivityForResult(new Intent(Android.Bluetooth.BluetoothAdapter.ActionRequestEnable), 0);
                 }
-            }
-            else
+            } catch (Exception exc)
             {
-                StartActivityForResult(new Intent(Android.Bluetooth.BluetoothAdapter.ActionRequestEnable), 0);
+                Console.WriteLine(exc);
+                var intent = new Intent(this, typeof(MainActivity));
+                StartActivity(intent);
             }
         }
     }

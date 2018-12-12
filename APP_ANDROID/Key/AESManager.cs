@@ -36,52 +36,41 @@ namespace Key
         }
 
 
-        //FIX: for CBC mode, the InitVect must never be reused for different messages under the same key,
-        //     and must be unpredictable in advance by an attacker
-        public void EncryptFile_Aes(string inputFile) {
+        public byte[] EncryptStringToBytes_Aes(string plainText)
+        {
             // Check arguments.
-            if (inputFile == null || inputFile.Length <= 0)
-                throw new ArgumentNullException(nameof(inputFile));
-
+            /*if (plainText == null || plainText.Length <= 0)
+                throw new ArgumentNullException("plainText");
+            if (Key == null || Key.Length <= 0)
+                throw new ArgumentNullException("Key");
+            if (InitVect == null || InitVect.Length <= 0)
+                throw new ArgumentNullException("IV");*/
+            byte[] encrypted;
             // Create an AesCryptoServiceProvider object
             // with the specified key and InitVect.
-            using (AesCryptoServiceProvider aesAlg = SetupAesProvider()) {
+            using (AesCryptoServiceProvider aesAlg = SetupAesProvider())
+            {
                 aesAlg.GenerateIV();
                 aesAlg.GenerateKey();
-
                 Update(aesAlg.Key, aesAlg.IV);
-
                 // Create an encryptor to perform the stream transform.
                 ICryptoTransform encryptor = aesAlg.CreateEncryptor(aesAlg.Key, aesAlg.IV);
-
                 // Create the streams used for encryption.
-                using (FileStream fsCrypt = new FileStream(inputFile + ".aes", FileMode.Create)){
-                    using (CryptoStream csEncrypt = new CryptoStream(fsCrypt, encryptor, CryptoStreamMode.Write)) {
-                        using (FileStream fsIn = new FileStream(inputFile, FileMode.Open)) {
-                            byte[] buffer = new byte[1048576];
-                            int read;
-
-                            try {
-                                while ((read = fsIn.Read(buffer, 0, buffer.Length)) > 0) {
-                                    //Application.DoEvents(); // -> for responsive GUI, using Task will be better!
-                                    csEncrypt.Write(buffer, 0, read);
-                                }
-
-                                // Close up
-                                fsIn.Close();
-                            }
-                            catch (Exception ex) {
-                                Console.WriteLine("Error: " + ex.Message);
-                            }
-                            finally {
-                                fsIn.Close();
-                                csEncrypt.Close();
-                                fsCrypt.Close();
-                            }
+                using (MemoryStream msEncrypt = new MemoryStream())
+                {
+                    using (CryptoStream csEncrypt = new CryptoStream(msEncrypt, encryptor, CryptoStreamMode.Write))
+                    {
+                        using (StreamWriter swEncrypt = new StreamWriter(csEncrypt))
+                        {
+                            //Write all data to the stream.
+                            swEncrypt.Write(plainText);
                         }
+                        encrypted = msEncrypt.ToArray();
                     }
                 }
             }
+
+            return encrypted;
         }
 
         private static AesCryptoServiceProvider SetupAesProvider()
@@ -95,52 +84,33 @@ namespace Key
             return aes_provider;
         }
 
-        public void DecryptFile_Aes(string inputFile, string outputFile) {
-            // Check arguments.
-            if (inputFile == null || inputFile.Length <= 0)
-                throw new ArgumentNullException(nameof(inputFile));
-            if (Key == null || Key.Length <= 0)
-                throw new ArgumentNullException("Key");
-            if (InitVect == null || InitVect.Length <= 0)
-                throw new ArgumentNullException("IV");
+        public string DecryptStringFromBytes_Aes(byte[] cipherText)
+        {
+            string plaintext;
             // Create an AesCryptoServiceProvider object
             // with the specified key and InitVect.
-
-            using (AesCryptoServiceProvider aesAlg = SetupAesProvider()) {
+            using (AesCryptoServiceProvider aesAlg = SetupAesProvider())
+            {
                 aesAlg.Key = Key;
                 aesAlg.IV = InitVect;
-
                 // Create a decryptor to perform the stream transform.
                 ICryptoTransform decryptor = aesAlg.CreateDecryptor(aesAlg.Key, aesAlg.IV);
-
                 // Create the streams used for decryption.
-                using (FileStream fsCrypt = new FileStream(inputFile, FileMode.Open)) {
-                    using (CryptoStream csDecrypt = new CryptoStream(fsCrypt, decryptor, CryptoStreamMode.Read)) {
-                        using (FileStream fsOut = new FileStream(outputFile, FileMode.Create)) {
-                            int read;
-                            byte[] buffer = new byte[1048576];
-
-                            try {
-                                while ((read = csDecrypt.Read(buffer, 0, buffer.Length)) > 0) {
-                                    //Application.DoEvents();
-                                    fsOut.Write(buffer, 0, read);
-                                }
-                            }
-                            catch (CryptographicException ex_CryptographicException) {
-                                Console.WriteLine("CryptographicException error: " + ex_CryptographicException.Message);
-                            }
-                            catch (Exception ex) {
-                                Console.WriteLine("Error: " + ex.Message);
-                            }
-                            finally {
-                                fsOut.Close();
-                                csDecrypt.Close();
-                                fsCrypt.Close();
-                            }
+                using (MemoryStream msDecrypt = new MemoryStream(cipherText))
+                {
+                    using (CryptoStream csDecrypt = new CryptoStream(msDecrypt, decryptor, CryptoStreamMode.Read))
+                    {
+                        using (StreamReader srDecrypt = new StreamReader(csDecrypt))
+                        {
+                            // Read the decrypted bytes from the decrypting stream
+                            // and place them in a string.
+                            plaintext = srDecrypt.ReadToEnd();
                         }
                     }
                 }
             }
+            return plaintext;
         }
+
     }
 }

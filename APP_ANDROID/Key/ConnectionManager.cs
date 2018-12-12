@@ -39,6 +39,7 @@ namespace Key
             catch (System.IO.IOException)
             {
                 Console.WriteLine("FAILED TO CREATE SOCKET");
+                throw;
             }
             mmSocket = tmp;
             BluetoothAdapter defaultAdapter = BluetoothAdapter.DefaultAdapter;
@@ -63,8 +64,9 @@ namespace Key
                 catch (IOException)
                 {
                     Console.WriteLine("FAILED TO CLOSE");
+                    throw;
                 }
-                return;
+                throw;
             }
 
             // Do work to manage the connection (in a separate thread)
@@ -80,7 +82,7 @@ namespace Key
                 tmpIn = mmSocket.InputStream;
                 tmpOut = mmSocket.OutputStream;
             }
-            catch (IOException) { }
+            catch (IOException) { throw; }
 
             inputStream = tmpIn;
             outputStream = tmpOut;
@@ -99,17 +101,17 @@ namespace Key
             }
             catch (Exception exc) {
                 Console.WriteLine(exc);
+                throw;
 
             }
         }
 
         public void SetConnectionWithInfo(string qrCodeInfo)
         {
-            Console.Write("WITH INFO FROM REGISTER");
+            Console.WriteLine("WITH INFO FROM REGISTER");
             QrCodeObject qrCodeObj = JsonConvert.DeserializeObject<QrCodeObject>(qrCodeInfo);
 
-            securityManager = new SecurityManager(qrCodeObj.KcPub, qrCodeObj.Kd);
-            //dict[nonce] = dicKeys[nonce].Value;
+            securityManager = new SecurityManager(qrCodeObj.KcPub.RSAParameters, qrCodeObj.Kd);
 
             ConnectingToDevice();
             SendRegisterInfo(qrCodeObj);
@@ -119,7 +121,7 @@ namespace Key
 
         public void SetConnection()
         {
-            Console.Write("WITHOUT INFO");
+            Console.WriteLine("WITHOUT INFO");
             securityManager = new SecurityManager();
             ConnectingToDevice();
             ListeningFromSocketAsync();
@@ -127,7 +129,6 @@ namespace Key
 
         private void SendRegisterInfo(QrCodeObject qrCodeObj)
         {
-            securityManager.Nonce = qrCodeObj.Nonce;
             JsonRemote message = new JsonRemote();
             message.PublicKey = securityManager.GetPublicKey();
             string content = JsonConvert.SerializeObject(message);
@@ -142,16 +143,17 @@ namespace Key
             {
                 Console.WriteLine("WRITE TO SOCKET");
                 byte[] bytes = Encoding.ASCII.GetBytes(str);
+                Console.WriteLine(bytes.Length);
                 outputStream.Write(bytes, 0, bytes.Length);
 
                 txtDebug.Text += "Sending: " + str + '\n';
             }
-            catch (IOException) { }
+            catch (IOException) { throw; }
         }
 
         private async void ListeningFromSocketAsync()
         {
-            byte[] buffer = new byte[1024];  // buffer store for the stream
+            byte[] buffer = new byte[4096];  // buffer store for the stream
             //int bytes; // bytes returned from read()
 
             // Keep listening to the InputStream until an exception occurs
@@ -160,16 +162,15 @@ namespace Key
                 try
                 {
                     // Read from the InputStream
-                    await inputStream.ReadAsync(buffer, 0, 1024);
+                    await inputStream.ReadAsync(buffer, 0, 4096);
                     string str = Encoding.ASCII.GetString(buffer);
                     txtDebug.Text += "Receiving: " + str + '\n';
 
                     ManageConnectedSocket(str);
                 }
-                catch (Exception exc)
+                catch (Exception)
                 {
-                    Console.WriteLine(exc);
-                    break;
+                    throw;
                 }
             }
         }
@@ -193,11 +194,11 @@ namespace Key
 
     public class QrCodeObject
     {
-        public string Nonce;
-        public RSAParameters KcPub;
+        public long Nonce;
+        public RSAParametersSerializable KcPub;
         public byte[] Kd;
 
-        public QrCodeObject(string nonce, RSAParameters kcpub, byte[] kd)
+        public QrCodeObject(long nonce, RSAParametersSerializable kcpub, byte[] kd)
         {
             Nonce = nonce;
             KcPub = kcpub;
