@@ -107,6 +107,9 @@ namespace HostLocker {
             //SetVisibilityOfElements(new object[] { pb, QrCodeImage }, Visibility.Hidden);
             pb.Visibility = Visibility.Hidden;
             QrCodeImage.Visibility = Visibility.Hidden;
+            //bm.Dispose(true);
+            //Console.WriteLine(bc.ReadFromBtDevice());
+            //bc.sendMessage("It wokrs||!!");
         }
 
         private void Button_Click_1(object sender, RoutedEventArgs e) {
@@ -129,6 +132,7 @@ namespace HostLocker {
         private async void listen_btn_Click(object sender, RoutedEventArgs e) {
             listen_btn.Visibility = Visibility.Hidden;
             register_btn.Visibility = Visibility.Hidden;
+            //SetVisibilityOfElements(new object[] {pb, stop_listen_btn, QrCodeImage}, Visibility.Visible);
             pb.Visibility = Visibility.Visible;
             stop_listen_btn.Visibility = Visibility.Visible;
 

@@ -38,6 +38,7 @@ namespace HostLocker
             hmacManager = new HMACManager(user.UserSecretKey);
             GenerateNonce();
             EncryptedSymmetricKey = user.EncryptedUserAesKey;
+            Console.WriteLine($"From file: {user.EncryptedUserAesKey}");
         }
 
         public long GenerateNonce() {
@@ -64,14 +65,15 @@ namespace HostLocker
 
             //Cipher content with the symmetric key
             byte[] bytes = ConnAesManager.EncryptStringToBytes_Aes(msg);
+            string cipherText = JsonConvert.SerializeObject(bytes);
 
             //Cipher the symmetric key with pub key
             KeyDecipher keyDecipher = new KeyDecipher(ConnAesManager.Key, ConnAesManager.InitVect);
             string KeyDecipher = JsonConvert.SerializeObject(keyDecipher);
-            string cipheredKey = rsaManager.Encrypt(KeyDecipher, DevicePublicKey);
+            string cipheredKey = rsaManager.Encrypt(KeyDecipher);
 
             //The cipherText and cipherKey
-            Message message = new Message(bytes, cipheredKey);
+            Message message = new Message(cipherText, cipheredKey);
 
             //Digest the message
             return JsonConvert.SerializeObject(new JsonCryptoDigestMessage(JsonConvert.SerializeObject(message), hmacManager.Encode(JsonConvert.SerializeObject(message))));
@@ -95,7 +97,7 @@ namespace HostLocker
 
             ConnAesManager.SetKey(key.Key, key.IV);
 
-            string jsonString = ConnAesManager.DecryptStringFromBytes_Aes(messageRecv.Cryptotext);
+            string jsonString = ConnAesManager.DecryptStringFromBytes_Aes(JsonConvert.DeserializeObject<byte[]>(messageRecv.Cryptotext));
 
             JsonFreshMessage jsonFreshMessage = JsonConvert.DeserializeObject<JsonFreshMessage>(jsonString);
 
@@ -156,10 +158,10 @@ namespace HostLocker
     }
 
     public class Message {
-        public byte[] Cryptotext { get; set; }
+        public string Cryptotext { get; set; }
         public string KeyToDecipher { get; set; }
 
-        public Message(byte[] cryptoText, string keyDecipher) {
+        public Message(string cryptoText, string keyDecipher) {
             Cryptotext = cryptoText;
             KeyToDecipher = keyDecipher;
         }
